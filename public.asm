@@ -56,24 +56,34 @@
 	ACC2 DB "222222$"
 	ACC3 DB "333333$"
 	
-	ACCPASS1 DB "AA11"	;PASSWORD
-	ACCPASS2 DB "BB22"
-	ACCPASS3 DB "CC33"
+	ACCPASS1 DB "AA11$"	;PASSWORD
+	ACCPASS2 DB "BB22$"
+	ACCPASS3 DB "CC33$"
 	
-	ACCNO1 DB "1111100000"	;ACC NUMBER
-	ACCNO2 DB "2222200000"
-	ACCNO3 DB "3333300000"
+	ACCNO1 DB "1111100000$"	;ACC NUMBER
+	ACCNO2 DB "2222200000$"
+	ACCNO3 DB "3333300000$"
 	
-	ACCNAME1 DB "ANGEL"		;USER NAME
-	ACCNAME2 DB "BUNNY"
-	ACCNAME3 DB "CHOLE"
+	ACCNAME1 DB "ANGEL$"		;USER NAME
+	ACCNAME2 DB "BUNNY$"
+	ACCNAME3 DB "CHOLE$"
 	
+	ACCBAL1 DW 10000
+	ACCBAL2 DW 2000
+	ACCBAL3 DW 300
+	
+	isUser  DB ?
+	TEMPBAL DW ?	
+	
+	
+;DISPLAY	
+;-------------------------------------------------------------------------------------------------------------------------------------------
+	DACCNAME DB "USERNAME: $"
+	DACCNO DB "ACCOUNT NO: $"
+	DBAL DB "CURRENT BALANCE: $"
 	IDN DB "                            ENTER ID: $"
 	PASSW DB "                         ENTER PASSWORD: $"
-	ACCBAL1	 DW 40000
-	ACCBAL DW ?
-	ACCTYPE DB ? 
-	isUser  DB  ?
+
 
 		;Local Arrays
 	ID	LABEL BYTE
@@ -233,7 +243,8 @@ PAGAIN:     mov ah,09h
 			lea dx,invalid
 			int 21h
 			jmp PW
-
+JMPER:	
+		JMP PAGAIN	
 COMPAREPS:	      
         MOV SI, 0
 		MOV CX, 4
@@ -249,37 +260,112 @@ COMPAREPS:
 		
 PASCOMPARE1:
 
-
 	    MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS1[SI]
-		JNE PAGAIN
+		JNE JMPER
 		INC SI
 		LOOP PASCOMPARE1
+		
+		JMP DINFO
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		mov ah,09h
+		lea dx,DACCNO
+		int 21h 
+		mov ah,09h
+		lea dx,ACCNO1
+		int 21h 
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		mov ah,09h
+		lea dx,DACCNAME
+		int 21h 
+		mov ah,09h
+		lea dx,ACCNAME1
+		int 21h
+		
+		;MOV BX,ACCBAL1
+		;MOV TEMPBAL,BX
+		;MOV AH,02H
+		;LEA DX, 
+		;INT 21H
 		jmp mmenu
 		
 PASCOMPARE2:
 
 		MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS2[SI]
-		JNE PAGAIN
+		JNE JMPER
 		INC SI
 		LOOP PASCOMPARE2
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		mov ah,09h
+		lea dx,DACCNO
+		int 21h 
+		mov ah,09h
+		lea dx,ACCNO2
+		int 21h 
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		mov ah,09h
+		lea dx,DACCNAME
+		int 21h 
+		mov ah,09h
+		lea dx,ACCNAME2
+		int 21h
 		jmp mmenu
 		
 PASCOMPARE3:
 		
 		MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS3[SI]
-		JNE PAGAIN
+		JNE JMPER
 		INC SI
 		LOOP PASCOMPARE3
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		mov ah,09h
+		lea dx,DACCNO
+		int 21h 
+		mov ah,09h
+		lea dx,ACCNO3
+		int 21h 
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		mov ah,09h
+		lea dx,DACCNAME
+		int 21h 
+		mov ah,09h
+		lea dx,ACCNAME3
+		int 21h
 		jmp mmenu
 
 mmenu:
 		mov ah,09h
 		lea dx,MAINMENU
 		int 21h
+		
+		
 
+;----------------------------END PROC-----------------------------------------
 	mov ah,4ch
 	int 21h
 main endp
