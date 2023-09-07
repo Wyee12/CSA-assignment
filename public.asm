@@ -129,7 +129,7 @@ invalidmsg:
 			int 21h
 			jmp input
 
-
+;----------------------------LOG IN-----------------------
 Login:			
 			mov ah,09h
 			lea dx,n_line
@@ -142,6 +142,7 @@ Login:
 			mov cx,6
 			mov si,0
 
+;----------------------------ENTER ID-----------------------
 			MOV AH, 0AH
 			LEA DX, ID
 			INT 21H
@@ -195,7 +196,8 @@ SCANID3:
 		INC SI
 		LOOP SCANID3
 		JMP PW
-		
+	
+;----------------------------ENTER PASSWORD-----------------------	
 PW:
 		mov ah,09h
 		lea dx,n_line
@@ -214,7 +216,7 @@ PW:
 		INT 21H
 
 		CMP ACTUALP,4  ;only enter 6 numbers
-		JMP PASCOMPARE
+		JMP PASCOMPARE1
 		
 PAGAIN:     mov ah,09h
 			lea dx,n_line
@@ -225,7 +227,7 @@ PAGAIN:     mov ah,09h
 			int 21h
 			jmp PW
 
-PASCOMPARE:
+PASCOMPARE1:
 		MOV SI, 0
 		MOV CX, 4
 
@@ -233,25 +235,33 @@ PASCOMPARE:
 		
 PW1:	MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS1[SI]
-		JNE PW2
+		JNE PASCOMPARE2
 		INC SI
 		LOOP PW1
 		jmp mmenu
 		
+PASCOMPARE2:
+		MOV SI, 0
+		MOV CX, 4
+		
 PW2:
 		MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS2[SI]
-		JNE PW3
+		JNE PASCOMPARE3
 		INC SI
-		LOOP PW1
+		LOOP PW2
 		jmp mmenu
+		
+PASCOMPARE3:
+		MOV SI, 0
+		MOV CX, 4
 	
 PW3:
 		MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS3[SI]
 		JNE PAGAIN
 		INC SI
-		LOOP PW1
+		LOOP PW3
 		jmp mmenu
 
 mmenu:
