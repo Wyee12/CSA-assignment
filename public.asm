@@ -72,7 +72,8 @@
 	PASSW DB "                         ENTER PASSWORD: $"
 	ACCBAL1	 DW 40000
 	ACCBAL DW ?
-	ACCTYPE DB ?
+	ACCTYPE DB ? 
+	isUser  DB  ?
 
 		;Local Arrays
 	ID	LABEL BYTE
@@ -85,7 +86,7 @@
 	MAXIMUMP	DB 	  7
 	ACTUALP		DB	  ?
 	PASSWORDNUM DB	  7 DUP()
-	isUser	DB ?
+
 	
 ;=====================================================================================================================
 .code
@@ -171,7 +172,7 @@ SCANID1:
 		INC SI
 		LOOP SCANID1
 		mov al,1
-		mov isUser,1
+		mov isUser,al
 		JMP PW
 		
 LCOMPARE2: 
@@ -185,7 +186,7 @@ SCANID2:
 		INC SI
 		LOOP SCANID2
 		mov al,2
-		mov isUser,2
+		mov isUser,al
 		JMP PW
 		
 	
@@ -200,7 +201,7 @@ SCANID3:
 		INC SI
 		LOOP SCANID3
 		mov al,3
-		mov isUser,3
+		mov isUser,al
 		JMP PW
 	
 ;----------------------------ENTER PASSWORD-----------------------	
@@ -222,7 +223,7 @@ PW:
 		INT 21H
 
 		CMP ACTUALP,4  ;only enter 4 numbers
-		JMP PASCOMPARE1
+		JMP COMPAREPS
 		
 PAGAIN:     mov ah,09h
 			lea dx,n_line
@@ -233,49 +234,45 @@ PAGAIN:     mov ah,09h
 			int 21h
 			jmp PW
 
-COMPAREPS:	
-		MOV al,isUser
-		cmp al,1
-		jmp PASCOMPARE1
-		CMP AL,2
-		JMP PASCOMPARE2
-		CMP AL,3
-		JMP PASCOMPARE3
-PASCOMPARE1:
-		MOV SI, 0
+COMPAREPS:	      
+        MOV SI, 0
 		MOV CX, 4
-
-	;loop to scan 1 by 1
+		MOV BL,0
 		
-PW1:	MOV AL, PASSWORDNUM[SI]  ;compare with array
+		MOV bl,isUser
+		cmp bl,1
+		je PASCOMPARE1
+		CMP bL,2
+		Je PASCOMPARE2
+		CMP bL,3
+		Je PASCOMPARE3 
+		
+PASCOMPARE1:
+
+
+	    MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS1[SI]
-		JNE PASCOMPARE2
+		JNE PAGAIN
 		INC SI
-		LOOP PW1
+		LOOP PASCOMPARE1
 		jmp mmenu
 		
 PASCOMPARE2:
-		MOV SI, 0
-		MOV CX, 4
-		
-PW2:
+
 		MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS2[SI]
-		JNE PASCOMPARE3
+		JNE PAGAIN
 		INC SI
-		LOOP PW2
+		LOOP PASCOMPARE2
 		jmp mmenu
 		
 PASCOMPARE3:
-		MOV SI, 0
-		MOV CX, 4
-	
-PW3:
+		
 		MOV AL, PASSWORDNUM[SI]  ;compare with array
 		CMP AL, ACCPASS3[SI]
 		JNE PAGAIN
 		INC SI
-		LOOP PW3
+		LOOP PASCOMPARE3
 		jmp mmenu
 
 mmenu:
