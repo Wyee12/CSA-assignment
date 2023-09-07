@@ -171,20 +171,29 @@ SCANID1:
 		LOOP SCANID1
 		JMP PW
 		
-LCOMPARE2:
+LCOMPARE2: 
+        MOV SI,0
+        MOV CX,6
+SCANID2:
+    
 		MOV AL, IDNUM[SI]  ;compare with array
 		CMP AL, ACC2[SI]
 		JNE LCOMPARE3
 		INC SI
-		LOOP SCANID1
+		LOOP SCANID2
 		JMP PW
+		
 	
 LCOMPARE3:
+        MOV SI,0
+        MOV CX,6 
+        
+SCANID3:
 		MOV AL, IDNUM[SI]  ;compare with array
 		CMP AL, ACC3[SI]
 		JNE again
 		INC SI
-		LOOP SCANID1
+		LOOP SCANID3
 		JMP PW
 		
 PW:
