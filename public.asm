@@ -265,36 +265,7 @@ PASCOMPARE1:
 		JNE JMPER
 		INC SI
 		LOOP PASCOMPARE1
-		
-		JMP DINFO
-		mov ah,09h
-		lea dx,n_line
-		int 21h
-		
-		mov ah,09h
-		lea dx,DACCNO
-		int 21h 
-		mov ah,09h
-		lea dx,ACCNO1
-		int 21h 
-		
-		mov ah,09h
-		lea dx,n_line
-		int 21h
-		
-		mov ah,09h
-		lea dx,DACCNAME
-		int 21h 
-		mov ah,09h
-		lea dx,ACCNAME1
-		int 21h
-		
-		;MOV BX,ACCBAL1
-		;MOV TEMPBAL,BX
-		;MOV AH,02H
-		;LEA DX, 
-		;INT 21H
-		jmp mmenu
+		JMP DISUSER1
 		
 PASCOMPARE2:
 
@@ -303,29 +274,7 @@ PASCOMPARE2:
 		JNE JMPER
 		INC SI
 		LOOP PASCOMPARE2
-		
-		mov ah,09h
-		lea dx,n_line
-		int 21h
-		
-		mov ah,09h
-		lea dx,DACCNO
-		int 21h 
-		mov ah,09h
-		lea dx,ACCNO2
-		int 21h 
-		
-		mov ah,09h
-		lea dx,n_line
-		int 21h
-		
-		mov ah,09h
-		lea dx,DACCNAME
-		int 21h 
-		mov ah,09h
-		lea dx,ACCNAME2
-		int 21h
-		jmp mmenu
+		JMP DISUSER2
 		
 PASCOMPARE3:
 		
@@ -334,30 +283,70 @@ PASCOMPARE3:
 		JNE JMPER
 		INC SI
 		LOOP PASCOMPARE3
+		JMP DISUSER3
+
 		
+DISUSER1:
 		mov ah,09h
 		lea dx,n_line
 		int 21h
 		
-		mov ah,09h
 		lea dx,DACCNO
 		int 21h 
-		mov ah,09h
-		lea dx,ACCNO3
+		lea dx,ACCNO1
 		int 21h 
 		
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNAME
+		int 21h 
+		lea dx,ACCNAME1
+		int 21h
+		;MOV BX,ACCBAL1
+		;MOV TEMPBAL,BX
+		;MOV AH,02H
+		;LEA DX, 
+		;INT 21H
+		JMP mmenu
+DISUSER2:
 		mov ah,09h
 		lea dx,n_line
 		int 21h
 		
-		mov ah,09h
+		lea dx,DACCNO
+		int 21h 
+		lea dx,ACCNO2
+		int 21h 
+		
+		lea dx,n_line
+		int 21h
+		
 		lea dx,DACCNAME
 		int 21h 
-		mov ah,09h
-		lea dx,ACCNAME3
+		lea dx,ACCNAME2
 		int 21h
 		jmp mmenu
 
+DISUSER3:
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNO
+		int 21h 
+		lea dx,ACCNO3
+		int 21h 
+		
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNAME
+		int 21h 
+		lea dx,ACCNAME3
+		int 21h
+		jmp mmenu
+		
 mmenu:
 		mov ah,09h
 		lea dx,MAINMENU
