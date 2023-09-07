@@ -85,7 +85,7 @@
 	MAXIMUMP	DB 	  7
 	ACTUALP		DB	  ?
 	PASSWORDNUM DB	  7 DUP()
-
+	isUser	DB ?
 	
 ;=====================================================================================================================
 .code
@@ -170,6 +170,8 @@ SCANID1:
 		JNE LCOMPARE2
 		INC SI
 		LOOP SCANID1
+		mov al,1
+		mov isUser,1
 		JMP PW
 		
 LCOMPARE2: 
@@ -182,6 +184,8 @@ SCANID2:
 		JNE LCOMPARE3
 		INC SI
 		LOOP SCANID2
+		mov al,2
+		mov isUser,2
 		JMP PW
 		
 	
@@ -195,6 +199,8 @@ SCANID3:
 		JNE again
 		INC SI
 		LOOP SCANID3
+		mov al,3
+		mov isUser,3
 		JMP PW
 	
 ;----------------------------ENTER PASSWORD-----------------------	
@@ -215,7 +221,7 @@ PW:
 		LEA DX, PASSWORD
 		INT 21H
 
-		CMP ACTUALP,4  ;only enter 6 numbers
+		CMP ACTUALP,4  ;only enter 4 numbers
 		JMP PASCOMPARE1
 		
 PAGAIN:     mov ah,09h
@@ -227,6 +233,14 @@ PAGAIN:     mov ah,09h
 			int 21h
 			jmp PW
 
+COMPAREPS:	
+		MOV al,isUser
+		cmp al,1
+		jmp PASCOMPARE1
+		CMP AL,2
+		JMP PASCOMPARE2
+		CMP AL,3
+		JMP PASCOMPARE3
 PASCOMPARE1:
 		MOV SI, 0
 		MOV CX, 4
