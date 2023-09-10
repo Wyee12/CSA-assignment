@@ -19,13 +19,13 @@
 			DB 13,10,"                   |               LOG MENU               |"
 			DB 13,10,"                   +======================================+"
 			DB 13,10,"                   |1.Log In ACCOUNT                      |"
-			DB 13,10,"                   |3.EXIT                                |"
+			DB 13,10,"                   |0.EXIT                                |"
 			DB 13,10,"                   +======================================+"
 			DB 13,10,13,10,"                            Enter selection: $"
 
 	;MAINMENU
 	;-------------------------------------------------------------------------------------------------------------------------------------------
-	MAINMENU 	DB 13,10,"                       PLEASE SELECT A FUNCTION        "
+	MAINMENU DB 13,10,"                           PLEASE SELECT A FUNCTION        "
 			DB 13,10,"                   +======================================+"
 			DB 13,10,"                   |              MAIN MENU               |"
 			DB 13,10,"                   +======================================+"
@@ -33,22 +33,31 @@
 			DB 13,10,"                   |2.Tranfer                             |"
 			DB 13,10,"                   |3.Deposit                             |"
 			DB 13,10,"                   |4.Summary                             |"
-			DB 13,10,"                   |5.Exit                                |"
+			DB 13,10,"                   |0.Exit                                |"
 			DB 13,10,"                   +======================================+"
-			DB 13,10,13,10,"                            Enter selection: $"
-
+			DB 13,10,13,10,"                            Enter selection: $"     
+			
+	;SUMMARY
+	;-------------------------------------------------------------------------------------------------------------------------------------------		
+     SMRY 	DB 13,10,"                         ~ WELCOME TO SUMARY REPORT ~        "
+			DB 13,10,"                   +======================================+"
+			DB 13,10,"                   |               SUMMARRY               |"
+			DB 13,10,"                   +======================================+"
+			DB 13,10,"                   |1.Withdraw                            |"
+			DB 13,10,"                   +======================================+"
+			DB 13,10,13,10,"                        Enter 0 to Exit: $"
 	
 	;Invalid msg
 	;-------------------------------------------------------------------------------------------------------------------------------------------
-	invalid DB "                  Invalid code pls Enter again ! $"
+	INCORRECT DB 13,10, "                     ![INCORRECT PLS ENTER AGAIN]! $"
+			  DB 13,10,"$"
+	invalid   DB "                  ![INVALID PLS ENTER THE NUMBER GIVEN]! $"
+	CLOSE     DB "                                 THANKS YOU! $"
 
 	;success msg
 	;-------------------------------------------------------------------------------------------------------------------------------------------
 	success DB "Successfully enterrrrrrr !!! $"
-
-	;new line
-	;-------------------------------------------------------------------------------------------------------------------------------------------
-	n_line DB 13,10,"$"
+	n_line  DB 13,10,"$"
 
 	;user information
 	;-------------------------------------------------------------------------------------------------------------------------------------------
@@ -68,21 +77,25 @@
 	ACCNAME2 DB "BUNNY$"
 	ACCNAME3 DB "CHOLE$"
 	
-	ACCBAL1 DW 10000
+	ACCBAL1 DW ?
 	ACCBAL2 DW 2000
 	ACCBAL3 DW 300
 	
 	isUser  DB ?
-	TEMPBAL DW ?	
+	TEMPBAL DW ?
+	DEPOSITSUM DB 4 DUP(?)
+
 	
 	
 ;DISPLAY	
 ;-------------------------------------------------------------------------------------------------------------------------------------------
-	DACCNAME DB "USERNAME: $"
-	DACCNO DB "ACCOUNT NO: $"
+	DACCNO   DB 13,10,"                          ACCOUNT NO: $"
+	DACCNAME DB	"                            USERNAME: $"
+		     DB 13,10,"$"
+	CURRENTAMT DB 13,10,"             CURRENT AMOUNT: $"
 	DBAL DB "CURRENT BALANCE: $"
-	IDN DB "                            ENTER ID: $"
-	PASSW DB "                         ENTER PASSWORD: $"
+	IDN DB 13,10,"                            ENTER ID: $"
+	PASSW DB "                      ENTER PASSWORD: $"
 
 
 		;Local Arrays
@@ -116,20 +129,27 @@ menu:
 	
 input:		mov ah,01h
 			int 21h
-			mov bl,0
+			mov BL,0
+			SUB AL,30H
 	
 compare:	
-			mov bl,al
+			mov BL,AL
+			cmp BL,1
+			JE LOGIN
+			CMP BL,0
+			JE EXIT
 
-			cmp bl,'1'
-			JE Login
-			cmp bl,'2'
-			JE invalidmsg
-			cmp bl,'3'
-			JE invalidmsg
-
-			JE invalidmsg
-
+EXIT: 		
+			mov ah,09h
+			lea dx,n_line
+			int 21h
+			
+			MOV AH,09H
+			LEA DX,CLOSE
+			INT 21H
+			MOV AH,4CH
+			INT 21H
+			
 invalidmsg: 
 			mov ah,09h
 			lea dx,n_line
@@ -160,13 +180,14 @@ Login:
 
 			CMP ACTUAL, 6  ;only enter 6 numbers
 			JE LCOMPARE1
-			
+
+JMPER1N2: JMP MENU			
 again:      mov ah,09h
 			lea dx,n_line
 			int 21h
 			
 			mov ah,09h		;invalid msg
-			lea dx,invalid
+			lea dx,INCORRECT
 			int 21h
 			
 			jmp Login
@@ -207,7 +228,7 @@ LCOMPARE3:
 SCANID3:
 		MOV AL, IDNUM[SI]  ;compare with array
 		CMP AL, ACC3[SI]
-		JNE again
+		JNE AGAIN
 		INC SI
 		LOOP SCANID3
 		mov al,3
@@ -240,11 +261,13 @@ PAGAIN:     mov ah,09h
 			int 21h
 			
 			mov ah,09h		;invalid msg
-			lea dx,invalid
+			lea dx,INCORRECT
 			int 21h
 			jmp PW
 JMPER:	
-		JMP PAGAIN	
+		JMP PAGAIN
+		
+JMPER1N1: JMP JMPER1N2	
 COMPAREPS:	      
         MOV SI, 0
 		MOV CX, 4
@@ -303,11 +326,11 @@ DISUSER1:
 		int 21h 
 		lea dx,ACCNAME1
 		int 21h
-		;MOV BX,ACCBAL1
-		;MOV TEMPBAL,BX
-		;MOV AH,02H
-		;LEA DX, 
-		;INT 21H
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
 		JMP mmenu
 DISUSER2:
 		mov ah,09h
@@ -326,6 +349,11 @@ DISUSER2:
 		int 21h 
 		lea dx,ACCNAME2
 		int 21h
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
 		jmp mmenu
 
 DISUSER3:
@@ -345,12 +373,93 @@ DISUSER3:
 		int 21h 
 		lea dx,ACCNAME3
 		int 21h
-		jmp mmenu
+
+		mov ah,09h
+		lea dx,n_line
+		int 21h
 		
+		jmp mmenu    
+		
+JMPER1: JMP JMPER1N1
+			
 mmenu:
 		mov ah,09h
 		lea dx,MAINMENU
 		int 21h
+		
+		MOV AH,01H
+		INT 21H
+		MOV BL,0
+		SUB AL,30H
+		MOV BL,AL
+		
+		CMP BL,1
+		JE WITHDRAW
+		CMP BL,2
+		JE TRANFER
+		CMP BL,3
+		JE DEPOSIT
+		CMP BL,4
+		JE SUMMARY
+		CMP BL,0
+		JE JMPER1
+		
+WITHDRAW: 
+			mov ah,09h
+			lea dx,n_line
+			int 21h
+			
+			MOV AH,09H
+			LEA DX,SUCCESS
+			INT 21H
+			MOV AH,4CH
+			INT 21H
+			
+TRANFER: 
+			mov ah,09h
+			lea dx,n_line
+			int 21h
+			
+			MOV AH,09H
+			LEA DX,SUCCESS
+			INT 21H
+			MOV AH,4CH
+			INT 21H
+			
+DEPOSIT: 
+			mov ah,09h
+			lea dx,n_line
+			int 21h
+			
+			MOV CX,4
+			MOV SI,0
+			
+		
+SUMMARY: 
+			mov ah,09h
+			lea dx,n_line
+			int 21h
+			
+			MOV AH,09H
+			LEA DX,SMRY
+			INT 21H
+			
+	
+			MOV SI,0
+			MOV CX,4
+			
+DISPLAYDEPO:
+
+			
+			MOV AH,09H
+			LEA DX,ACCBAL1[SI]
+			INT 21H
+			INC si
+			
+			JMP mmenu
+			
+			
+
 		
 		
 
