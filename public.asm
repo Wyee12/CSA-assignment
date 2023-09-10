@@ -77,9 +77,13 @@
 	ACCNAME2 DB "BUNNY$"
 	ACCNAME3 DB "CHOLE$"
 	
-	ACCBAL1 DW ?
+	ACCBAL1 DW 13000
 	ACCBAL2 DW 2000
 	ACCBAL3 DW 300
+	
+	ACCCent1 db 50
+	ACCCent2 db 00
+	ACCCent3 db 80
 	
 	isUser  DB ?
 	TEMPBAL DW ?
@@ -92,7 +96,7 @@
 	DACCNO   DB 13,10,"                          ACCOUNT NO: $"
 	DACCNAME DB	"                            USERNAME: $"
 		     DB 13,10,"$"
-	CURRENTAMT DB 13,10,"             CURRENT AMOUNT: $"
+	CURRENTAMT DB 13,10,"                          CURRENT AMOUNT: $"
 	DBAL DB "CURRENT BALANCE: $"
 	IDN DB 13,10,"                            ENTER ID: $"
 	PASSW DB "                      ENTER PASSWORD: $"
@@ -110,6 +114,50 @@
 	ACTUALP		DB	  ?
 	PASSWORDNUM DB	  7 DUP()
 
+	;DEPOSIT	
+;-------------------------------------------------------------------------------------------------------------------------------------------
+	depositmsg    db "Enter the deposit amount                : $"
+	depositmsg2	  db "Enter the cent of deposit amount(00-99) : $"
+    disdeposit    db  "Your current bank balance : $"
+    againdeposit  db  "Are you continue to deposit? (Y = yes) : $"
+	tempBalance   dw 0
+	tempamount 	  dw 0
+	tempAccCent   db 00
+	tempAmtCent   db 00
+	
+	rate 		  dw 1 
+	quotient      dw ?
+	
+	depinvalidmsg	  db "Invalid deposit amount.Please enter again.$"
+
+	DEPAMOUNT 	LABEL	 BYTE
+	MAX_DEP		DB 		6	
+	ACT_DEP		DB 		?
+	DT_DEP		DB 	    6 DUP('0')
+	
+	DEPDEM		LABEL	BYTE
+	MAX_DEPD	DB 		3
+	ACT_DEPD	db		?
+	DT_DEPD		db		3 DUP('0')
+	
+	;WITHDRAW	
+;-------------------------------------------------------------------------------------------------------------------------------------------
+	withdrawmsg    db "Enter the withdraw amount                : $"
+	withdrawmsg2	  db "Enter the cent of withdraw amount(00-99) : $"
+    diswithdraw    db  "Your current bank balance : $"
+    againwithdraw  db  "Are you continue to withdraw? (Y = yes) : $"
+	
+	withinvalidmsg	  db "Invalid withdraw amount.Please enter again.$"
+
+	WITHAMOUNT 	LABEL	 BYTE
+	MAX_WITH		DB 		6	
+	ACT_WITH		DB 		?
+	DT_WITH		DB 	    6 DUP('0')
+	
+	WITHDEM		LABEL	BYTE
+	MAX_WITHD	DB 		3
+	ACT_WITHD	db		?
+	DT_WITHD		db		3 DUP('0')
 	
 ;=====================================================================================================================
 .code
@@ -327,9 +375,11 @@ DISUSER1:
 		lea dx,ACCNAME1
 		int 21h
 		
-		mov ah,09h
-		lea dx,n_line
-		int 21h
+		mov ax,ACCBAL1
+		mov tempBalance,ax
+		
+		mov BL,ACCCent1
+		mov tempAccCent,BL
 		
 		JMP mmenu
 DISUSER2:
@@ -350,9 +400,11 @@ DISUSER2:
 		lea dx,ACCNAME2
 		int 21h
 		
-		mov ah,09h
-		lea dx,n_line
-		int 21h
+		mov ax,ACCBAL2
+		mov tempBalance,ax
+		
+		mov BL,ACCCent2
+		mov tempAccCent,BL
 		
 		jmp mmenu
 
@@ -373,16 +425,117 @@ DISUSER3:
 		int 21h 
 		lea dx,ACCNAME3
 		int 21h
-
-		mov ah,09h
-		lea dx,n_line
-		int 21h
+		
+		mov ax,ACCBAL2
+		mov tempBalance,ax
+		
+		mov BL,ACCCent2
+		mov tempAccCent,BL
 		
 		jmp mmenu    
 		
 JMPER1: JMP JMPER1N1
 			
 mmenu:
+	;display account balance
+	mov ah,09h
+	lea dx,CURRENTAMT
+	int 21h
+	
+	mov ax,0
+	mov ax,tempBalance
+	
+	cmp ax,10000
+	JAE dis5
+	cmp ax,1000
+	JAE dis4
+	cmp ax,100
+	JAE dis3
+	cmp ax,10
+	JAE dis2
+	jmp dis1
+
+JMPER2: jmp JMPER1
+	
+dis5:
+	mov dx,0 
+	mov bx,10000D
+	div bx
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+dis4:
+	mov dx,0
+	mov bx,1000D
+	div bx  
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+dis3:
+	mov dx,0
+	mov bx,100D
+	div bx 
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al 
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+dis2:
+	mov dx,0
+	mov bx,10D 
+	div bx     
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h	
+	mov ax,quotient
+	jmp dis1
+
+JMPER0: jmp JMPER2
+
+dis1:	
+	mov ah,02h
+	mov dl,al  
+	add dl,30h
+	int 21h
+	
+	mov ah,02h  ;display .
+	mov dl,2EH
+	int 21h
+	
+	;display demical
+	mov ax,0000H
+	mov al,tempAccCent
+	mov bl,10D
+	div bl
+	mov bl,ah
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	
+	mov dl,bl
+	add dl,30h
+	int 21h
+	
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,n_line
+	int 21h
+		
 		mov ah,09h
 		lea dx,MAINMENU
 		int 21h
@@ -402,18 +555,20 @@ mmenu:
 		CMP BL,4
 		JE SUMMARY
 		CMP BL,0
-		JE JMPER1
+		JE JMPER0
 		
 WITHDRAW: 
 			mov ah,09h
 			lea dx,n_line
 			int 21h
 			
-			MOV AH,09H
-			LEA DX,SUCCESS
-			INT 21H
-			MOV AH,4CH
-			INT 21H
+			call with
+			
+			;MOV AH,09H
+			;LEA DX,SUCCESS
+			;INT 21H
+			;MOV AH,4CH
+			;INT 21H
 			
 TRANFER: 
 			mov ah,09h
@@ -431,8 +586,7 @@ DEPOSIT:
 			lea dx,n_line
 			int 21h
 			
-			MOV CX,4
-			MOV SI,0
+			call Dep
 			
 		
 SUMMARY: 
@@ -467,4 +621,461 @@ DISPLAYDEPO:
 	mov ah,4ch
 	int 21h
 main endp
+
+Dep proc
+STARTDEP:
+	MOV AH,09H
+	lea dx,n_line
+	int 21h
+	
+	lea dx,depositmsg
+	int 21h
+	
+	mov ah,0AH
+	lea dx,DEPAMOUNT
+	int 21h
+	
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,depositmsg2
+	int 21h
+	
+	mov ah,0AH
+	lea dx,DEPDEM
+	int 21h
+
+;error
+	cmp ax,0
+	jb depinvalid
+	cmp ax,65535
+	ja depinvalid
+	jmp DEPCALCULATE
+	
+depinvalid:	mov ah,09h
+			lea dx,n_line
+			int 21h
+	
+			lea dx,depinvalidmsg
+			int 21h
+			jmp STARTDEP
+	
+DEPCALCULATE:
+		mov si,0
+        mov tempamount,0	
+		mov rate,1
+		mov al,ACT_DEP
+		mov ah,00H
+		mov cl,al
+		mov ch,00H
+		lea si,ACT_DEP
+		add si,ax
+		jmp DEPINPUT
+		
+		
+DEPINPUT:	
+
+	mov bx,rate
+	mov ax,bx
+	mov bx,[si]
+	mov bh,00H
+	sub bx,0030h
+	mul bx
+	add tempamount,ax
+	mov bx,rate
+	mov ax,0000H
+	mov al,10D
+	mov dx,0000H
+	mul bx
+	mov rate,ax
+	dec si
+	loop DEPINPUT
+	
+	mov si,0
+	mov ax,0
+	mov tempAmtCent,0
+	mov bl,ACT_DEPD
+	mov bh,00h
+	lea si,DT_DEPD
+	
+	cmp bl,2
+	JNE DEPdigitCent1
+	mov bl,[si]
+	mov bh,00H
+	sub bl,30h
+	mov al,10D
+	mul bl
+	mov tempAmtCent,al
+	inc si
+	
+	DEPdigitCent1:
+	mov al,[si]
+	sub al,30h
+	add tempAmtCent,al
+	
+	mov al,tempAmtCent
+	add tempAccCent,al
+	mov al,tempAccCent
+	cmp al,100
+	JB addition
+	sub al,100D
+	mov tempAccCent,al
+	inc tempamount
+	jmp addition
+		
+Addition:
+	mov ax,0
+	mov ax,tempamount
+	mov ax,tempBalance
+	add ax,tempamount
+	mov tempbalance,ax
+	
+	;display balance
+	
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,disdeposit
+	int 21h
+	
+	mov ax,0
+	mov ax,tempBalance
+	
+	cmp ax,10000
+	JAE DEPdis5
+	cmp ax,1000
+	JAE DEPdis4
+	cmp ax,100
+	JAE DEPdis3
+	cmp ax,10
+	JAE DEPdis2
+	jmp DEPdis1
+	
+depJumper1: jmp STARTDEP	
+	
+DEPdis5:
+	mov dx,0 
+	mov bx,10000D
+	div bx
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+DEPdis4:
+	mov dx,0
+	mov bx,1000D
+	div bx  
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+DEPdis3:
+	mov dx,0
+	mov bx,100D
+	div bx 
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al 
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+DEPdis2:
+	mov dx,0
+	mov bx,10D 
+	div bx     
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h	
+	mov ax,quotient
+	jmp dis1
+	
+depjumper: jmp depJumper1
+	
+DEPdis1:	
+	mov ah,02h
+	mov dl,al  
+	add dl,30h
+	int 21h
+	
+	mov ah,02h  ;display .
+	mov dl,2EH
+	int 21h
+	
+	;display demical
+	mov ax,0000H
+	mov al,tempAccCent
+	mov bl,10D
+	div bl
+	mov bl,ah
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	
+	mov dl,bl
+	add dl,30h
+	int 21h
+	
+	;ask to repeat deposit
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+
+	mov ah,09h
+	lea dx,againdeposit
+	int 21h
+	
+	mov ah,01h
+	int 21h
+	
+	cmp al,'Y'
+	JE depjumper
+	cmp al,'y'
+	JE depjumper
+	
+Dep endp
+
+;---------------------------------------------------------------------------------------------------------------------------
+With proc
+STARTWITH:
+	MOV AH,09H
+	lea dx,n_line
+	int 21h
+	
+	lea dx,withdrawmsg
+	int 21h
+	
+	mov ah,0AH
+	lea dx,WITHAMOUNT
+	int 21h
+	
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,withdrawmsg2
+	int 21h
+	
+	mov ah,0AH
+	lea dx,WITHDEM
+	int 21h
+
+;problem
+	cmp ax,0
+	jb withinvalid
+	cmp ax,65535
+	ja withinvalid
+	jmp WITHCALCULATE
+	
+withinvalid:	mov ah,09h
+			lea dx,n_line
+			int 21h
+	
+			lea dx,withinvalidmsg
+			int 21h
+			jmp STARTWITH
+	
+WITHCALCULATE:
+		mov si,0
+        mov withamount,0	
+		mov rate,1
+		mov al,ACT_WITH
+		mov ah,00H
+		mov cl,al
+		mov ch,00H
+		lea si,ACT_WITH
+		add si,ax
+		jmp WITHINPUT
+		
+		
+WITHINPUT:	
+
+	mov bx,rate
+	mov ax,bx
+	mov bx,[si]
+	mov bh,00H
+	sub bx,0030h
+	mul bx
+	SUB tempamount,ax
+	mov bx,rate
+	mov ax,0000H
+	mov al,10D
+	mov dx,0000H
+	mul bx
+	mov rate,ax
+	dec si
+	loop WITHINPUT
+	
+	mov si,0
+	mov ax,0
+	mov tempAmtCent,0
+	mov bl,ACT_WITHD
+	mov bh,00h
+	lea si,DT_WITHD
+	
+	cmp bl,2
+	JNE WITHdigitCent1
+	mov bl,[si]
+	mov bh,00H
+	sub bl,30h
+	mov al,10D
+	mul bl
+	mov tempAmtCent,al
+	inc si
+	
+	WITHdigitCent1:
+	mov al,[si]
+	sub al,30h
+	add tempAmtCent,al
+	
+	mov al,tempAmtCent
+	cmp tempAccCent,al
+	JAE decSub
+	mov bl,100D
+	add tempAccCent,BL
+	dec tempBalance
+	decSub:
+	sub tempAccCent,al
+	mov al,tempAccCent
+		
+SUBSTACTION:
+	mov ax,0
+	mov ax,tempamount
+	mov ax,tempBalance
+	add ax,tempamount
+	mov tempbalance,ax
+	
+	;display balance
+	
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,diswithdraw
+	int 21h
+	
+	mov ax,0
+	mov ax,tempBalance
+	
+	cmp ax,10000
+	JAE WITHdis5
+	cmp ax,1000
+	JAE WITHdis4
+	cmp ax,100
+	JAE WITHdis3
+	cmp ax,10
+	JAE WITHdis2
+	jmp WITHdis1
+	
+withJumper1: jmp STARTWITH	
+	
+WITHdis5:
+	mov dx,0 
+	mov bx,10000D
+	div bx
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+WITHdis4:
+	mov dx,0
+	mov bx,1000D
+	div bx  
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+WITHdis3:
+	mov dx,0
+	mov bx,100D
+	div bx 
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al 
+	add dl,30h
+	int 21h
+	mov ax,quotient
+	
+WITHdis2:
+	mov dx,0
+	mov bx,10D 
+	div bx     
+	mov quotient,dx
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h	
+	mov ax,quotient
+	jmp dis1
+	
+withjumper: jmp withJumper1
+	
+WITHdis1:	
+	mov ah,02h
+	mov dl,al  
+	add dl,30h
+	int 21h
+	
+	mov ah,02h  ;display .
+	mov dl,2EH
+	int 21h
+	
+	;display demical
+	mov ax,0000H
+	mov al,tempAccCent
+	mov bl,10D
+	div bl
+	mov bl,ah
+	mov ah,02h
+	mov dl,al
+	add dl,30h
+	int 21h
+	
+	mov dl,bl
+	add dl,30h
+	int 21h
+	
+	;ask to repeat deposit
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+
+	mov ah,09h
+	lea dx,againwithdraw
+	int 21h
+	
+	mov ah,01h
+	int 21h
+	
+	cmp al,'Y'
+	JE withjumper
+	cmp al,'y'
+	JE withjumper
+	
+	With endp
 	end main
