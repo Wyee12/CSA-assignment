@@ -55,6 +55,9 @@
 			  DB 13,10,"$"
 	invalid   DB "                  ![INVALID PLS ENTER THE NUMBER GIVEN]! $"
 	CLOSE     DB "                                 THANKS YOU! $"
+	dginvalidmsg	  db "Invalid input amount.Please enter digit only.$"
+	inTransMsg DB	13,10,"The account number does not exist.Please enter a valid account number.",13,10,"$"
+	
 
 	;success msg
 	;-------------------------------------------------------------------------------------------------------------------------------------------
@@ -102,6 +105,7 @@
 	DBAL DB "CURRENT BALANCE: $"
 	IDN DB 13,10,"                            ENTER ID: $"
 	PASSW DB "                      ENTER PASSWORD: $"
+	disbalance    db  "Your current bank balance : $"
 
 
 		;Local Arrays
@@ -135,8 +139,22 @@
 	withdrawmsg    db "Enter the withdraw amount                : $"
 	withdrawmsg2	  db "Enter the cent of withdraw amount(00-99) : $"
     againwithdraw  db  "Are you continue to withdraw? (Y/N) : $"
-	noMoneyMsg DB "No enough money to withdraw.Please enter a valid amount.$"
+
 	
+	;TRANSFER	
+;-------------------------------------------------------------------------------------------------------------------------------------------
+	transaccmsg	DB	"Enter the transfer account :$"
+	transfermsg    db "Enter the transfer amount                : $"
+	transfermsg2	  db "Enter the cent of transfer amount(00-99) : $"
+    againtransfer  db  "Are you continue to transfer? (Y/N) : $"
+	noMoneyMsg DB "No enough money to cash out.Please enter a valid amount.$"
+	
+	istransUser DB	?
+	
+	TRANSIN	LABEL	BYTE
+	MAX_TIN	DB		11
+	ACT_TIN	DB		?
+	DT_TIN	DB		11 DUP ('*')
 	
 	INPUTAMT	LABEL	BYTE
 	MAX_IN	    DB	6
@@ -148,8 +166,7 @@
 	ACT_DEC	DB	?
 	DT_DEC	DB	3 DUP ('0')
 	
-	dginvalidmsg	  db "Invalid input amount.Please enter digit only.$"
-	disbalance    db  "Your current bank balance : $"
+
 	
 ;=====================================================================================================================
 .code
@@ -461,7 +478,7 @@ mmenu:
 		CMP BL,3
 		JE DEPOSIT
 		CMP BL,4
-		JE DEPOSIT
+		JE SUMMARY
 		CMP BL,0
 		JE JMPER1
 		
@@ -483,11 +500,7 @@ TRANFER:
 			lea dx,n_line
 			int 21h
 			
-			MOV AH,09H
-			LEA DX,SUCCESS
-			INT 21H
-			MOV AH,4CH
-			INT 21H
+			call trans
 			
 DEPOSIT: 
 			mov ah,09h
@@ -689,96 +702,8 @@ STARTWITH:
 
 	call validDigit
 	
+	call subs
 
-	
-WITHCALCULATE:
-		mov si,0
-        mov tempamount,0	
-		mov rate,1
-		mov al,ACT_IN
-		mov ah,00H
-		mov cl,al
-		mov ch,00H
-		lea si,ACT_IN
-		add si,ax
-		jmp WITHINPUT
-		
-		
-WITHINPUT:	
-
-	mov bx,rate
-	mov ax,bx
-	mov bx,[si]
-	mov bh,00H
-	sub bx,0030h
-	mul bx
-	add tempamount,ax
-	mov bx,rate
-	mov ax,0000H
-	mov al,10D
-	mov dx,0000H
-	mul bx
-	mov rate,ax
-	dec si
-	loop WITHINPUT
-	;check enough money
-	mov ax,tempBalance
-	mov bx,tempamount
-	cmp ax,bx
-	jae calcDecimal
-	mov ah,09h
-	lea dx,n_line
-	int 21h
-
-	lea dx,noMoneyMsg
-	int 21h
-	jmp STARTWITH
-	
-	
-	calcDecimal:
-	mov si,0
-	mov ax,0
-	mov tempAmtCent,0
-	mov bl,ACT_DEC
-	mov bh,00h
-	lea si,DT_DEC
-	
-	cmp bl,2
-	JNE WITHdigitCent1 
-	mov bl,[si]        ;calculation for two digit DECIMAL
-	mov bh,00H
-	sub bl,30h
-	mov al,10D
-	mul bl
-	mov tempAmtCent,al
-	inc si
-	
-	WITHdigitCent1:    ;calculation for one digit decimal
-	mov al,[si]
-	sub al,30h
-	add tempAmtCent,al
-	
-	mov al,tempAmtCent
-	cmp tempAccCent,al
-	JAE decSub
-	mov bl,100D
-	add tempAccCent,BL
-	dec tempBalance
-	decSub:
-	sub tempAccCent,al
-	mov al,tempAccCent
-	jmp SUBSTACTION
-	
-withjumper: jmp STARTWITH	
-
-SUBSTACTION:
-	mov ax,0
-	mov ax,tempamount
-	mov ax,tempBalance
-	sub ax,tempamount
-	mov tempBalance,ax
-	
-	
 	;display balance
 	mov ah,09h
 	lea dx,n_line
@@ -804,9 +729,9 @@ askwithdraw:
 	int 21h
 	
 	cmp al,'Y'
-	JE withjumper
+	JE STARTWITH
 	cmp al,'y'
-	JE withjumper
+	JE STARTWITH
 	jmp mmenu               
 	                
 	With endp
@@ -900,6 +825,103 @@ WITHdis1:
 ret
  disBal endp
  
+ subs proc
+ 
+ WITHCALCULATE:
+		mov si,0
+        mov tempamount,0	
+		mov rate,1
+		mov al,ACT_IN
+		mov ah,00H
+		mov cl,al
+		mov ch,00H
+		lea si,ACT_IN
+		add si,ax
+		jmp WITHINPUT
+		
+		
+WITHINPUT:	
+
+	mov bx,rate
+	mov ax,bx
+	mov bx,[si]
+	mov bh,00H
+	sub bx,0030h
+	mul bx
+	add tempamount,ax
+	mov bx,rate
+	mov ax,0000H
+	mov al,10D
+	mov dx,0000H
+	mul bx
+	mov rate,ax
+	dec si
+	loop WITHINPUT
+	;check enough money
+	mov ax,tempBalance
+	mov bx,tempamount
+	cmp ax,bx
+	jae calcDecimal
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+
+	lea dx,noMoneyMsg
+	int 21h
+	mov al,isAction
+	cmp al,1
+	je contJumper1
+	jne contJumper2
+	
+contJumper1: jmp STARTWITH
+contJumper2: jmp STARTTRANS2
+	
+	
+	calcDecimal:
+	mov si,0
+	mov ax,0
+	mov tempAmtCent,0
+	mov bl,ACT_DEC
+	mov bh,00h
+	lea si,DT_DEC
+	
+	cmp bl,2
+	JNE WITHdigitCent1 
+	mov bl,[si]        ;calculation for two digit DECIMAL
+	mov bh,00H
+	sub bl,30h
+	mov al,10D
+	mul bl
+	mov tempAmtCent,al
+	inc si
+	
+	WITHdigitCent1:    ;calculation for one digit decimal
+	mov al,[si]
+	sub al,30h
+	add tempAmtCent,al
+	
+	mov al,tempAmtCent
+	cmp tempAccCent,al
+	JAE decSub
+	mov bl,100D
+	add tempAccCent,BL
+	dec tempBalance
+	decSub:
+	sub tempAccCent,al
+	mov al,tempAccCent
+	jmp SUBSTACTION
+	
+withjumper: jmp STARTWITH	
+
+SUBSTACTION:
+	mov ax,0
+	mov ax,tempamount
+	mov ax,tempBalance
+	sub ax,tempamount
+	mov tempBalance,ax
+ ret
+ subs endp
+ 
  validDigit proc
  
  ;validation to make sure user input all digit
@@ -919,11 +941,11 @@ Dgvalid:
 			
 			cmp BL,1
 			JNE JMPTRANS
-			jmp WITHCALCULATE
+		    ret
 JMPTRANS:	CMP BL,2
 			JNE JMPDEP
-			JMP WITHCALCULATE
-JMPDEP:		JMP DEPCALCULATE
+			ret
+JMPDEP:		ret
 	
 	
 	withinvalid:	
@@ -945,4 +967,134 @@ CMPDEP:		JMP STARTDEP
 			
 ret	
 	validDigit endp
+	
+trans proc
+STARTTRANS:
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,transaccmsg
+	int 21h
+	
+	mov ah,0AH
+	lea dx,TRANSIN
+	int 21h
+	
+	;search ACCNO
+	mov bl,isUser
+	cmp bl,1
+	je cmpuser2
+	jne checkUser1
+cmpuser2:
+	cmp bl,2
+	je cmpuser3
+	jne checkUser2
+cmpuser3:
+	cmp bl,3
+	je invalidtrans
+	jne checkUser3
+	
+	checkUser1:
+	mov cx,10
+	mov si,0
+check1:
+	mov al,ACCNO1[si]
+	cmp al,DT_TIN[si]
+	jne cmpuser2
+	inc si
+	loop check1
+	jmp STARTTRANS2
+	
+	checkUser2:
+	mov cx,10
+	mov si,0
+check2:
+	mov al,ACCNO2[si]
+	cmp al,DT_TIN[si]
+	jne cmpuser3
+	inc si
+	loop check2
+	jmp STARTTRANS2
+	
+	checkUser3:
+	mov cx,10
+	mov si,0
+check3:
+	mov al,ACCNO3[si]
+	cmp al,DT_TIN[si]
+	jne invalidtrans
+	inc si
+	loop check3
+	jmp STARTTRANS2
+
+invalidtrans:
+
+		mov ah,09h
+		lea dx,inTransMsg
+		int 21h
+		JMP STARTTRANS
+		
+STARTTRANS2:
+	
+	MOV AH,09H
+	lea dx,n_line
+	int 21h
+	
+	lea dx,transfermsg
+	int 21h
+	
+	mov ah,0AH
+	lea dx,INPUTAMT
+	int 21h
+	
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,transfermsg2
+	int 21h
+	
+	mov ah,0AH
+	lea dx,DECIMAL
+	int 21h
+	
+	call validDigit
+	
+	call subs
+	
+	
+	
+	;display balance
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,disbalance
+	int 21h
+	call disBal
+	
+asktransfer:
+	;ask to repeat deposit
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,n_line
+	int 21h
+
+	lea dx,againtransfer ;display 
+	int 21h
+	
+	mov ah,01h
+	int 21h
+	
+	cmp al,'Y'
+	JE contStart1
+	cmp al,'y'
+	JE contStart1
+	jmp mmenu
+contStart1: jmp STARTTRANS
+	
+trans endp
 	end main
