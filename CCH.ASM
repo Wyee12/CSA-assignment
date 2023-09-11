@@ -449,10 +449,10 @@ DISUSER3:
 		lea dx,ACCNAME3
 		int 21h
 		
-		mov ax,ACCBAL2
+		mov ax,ACCBAL3
 		mov tempBalance,ax
 		
-		mov BL,ACCCent2
+		mov BL,ACCCent3
 		mov tempAccCent,BL
 		
 		jmp mmenu    
@@ -739,6 +739,7 @@ ADDAMT:
 	SUB DL,100D
 	MOV TTLDEPOCENT,DL
 	INC TTLDEPOSIT
+	jmp poo
 
 depJumper1: jmp STARTDEP
 POO: 
@@ -1157,6 +1158,7 @@ check1:
 	jne cmpuser2
 	inc si
 	loop check1
+	mov istransUser,1
 	jmp STARTTRANS2
 	
 	checkUser2:
@@ -1168,6 +1170,7 @@ check2:
 	jne cmpuser3
 	inc si
 	loop check2
+	mov istransUser,2
 	jmp STARTTRANS2
 	
 	checkUser3:
@@ -1179,6 +1182,7 @@ check3:
 	jne invalidtrans
 	inc si
 	loop check3
+	mov istransUser,3
 	jmp STARTTRANS2
 
 invalidtrans:
@@ -1212,14 +1216,48 @@ STARTTRANS2:
 	lea dx,DECIMAL
 	int 21h
 	
-	
-	
-	call validDigit
-	
+		call validDigit
 	call subs
 	
 	
+	mov ah,tempAmtCent
+	mov al,istransUser
+	cmp al,1
+	JE transUser1
+	cmp al,2
+	JE transUser2
+	JMP transUser3
 	
+transUser1:
+	add ACCCent1,ah
+	mov dl,ACCCent1
+	call checkover100
+	mov ACCCent1,DL
+	add ACCBAL1,Ax
+	mov bx,tempamount
+	add ACCBAL1,bx
+	jmp displayamt
+	
+transUser2:
+	add ACCCent2,ah
+	mov dl,ACCCent2
+	call checkover100
+	mov ACCCent2,DL
+	add ACCBAL2,Ax
+	mov bx,tempamount
+	add ACCBAL2,bx
+	jmp displayamt
+	
+transUser3:
+	add ACCCent3,ah
+	mov dl,ACCCent3
+	call checkover100
+	mov ACCCent3,DL
+	add ACCBAL3,Ax
+	mov bx,tempamount
+	add ACCBAL3,bx	
+	
+displayamt:
 	;display balance
 	mov ah,09h
 	lea dx,n_line
@@ -1257,4 +1295,14 @@ asktransfer:
 contStart1: jmp STARTTRANS
 	
 trans endp
+
+checkover100 proc
+	cmp dl,100D
+	jb notOver
+	mov ah,00h
+	mov al,1
+	sub dl,100D
+	
+notOver: mov al,00h 
+ret	
 	end main
