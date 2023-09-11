@@ -35,7 +35,9 @@
 			DB 13,10,"                   |4.Summary                             |"
 			DB 13,10,"                   |0.Exit                                |"
 			DB 13,10,"                   +======================================+"
-			DB 13,10,13,10,"                            Enter selection: $"     
+			DB 13,10,13,10,"                            Enter selection: $"   
+
+	isAction	DB	?
 			
 	;SUMMARY
 	;-------------------------------------------------------------------------------------------------------------------------------------------		
@@ -118,29 +120,24 @@
 ;-------------------------------------------------------------------------------------------------------------------------------------------
 	depositmsg    db "Enter the deposit amount                : $"
 	depositmsg2	  db "Enter the cent of deposit amount(00-99) : $"
-    disdeposit    db  "Your current bank balance : $"
-    againdeposit  db  "Are you continue to deposit? (Y = yes) : $"
+    againdeposit  db  "Are you continue to deposit? (Y/N) : $"
 	tempBalance   dw 0
 	tempamount 	  dw 0
 	tempAccCent   db 00
 	tempAmtCent   db 00
 	
 	rate 		  dw 1 
-	quotient      dw ?
-	
-	depinvalidmsg	  db "Invalid deposit amount.Please enter again.$"
+	remainder      dw ?
 
 	
 	;WITHDRAW	
 ;-------------------------------------------------------------------------------------------------------------------------------------------
 	withdrawmsg    db "Enter the withdraw amount                : $"
 	withdrawmsg2	  db "Enter the cent of withdraw amount(00-99) : $"
-    diswithdraw    db  "Your current bank balance : $"
-    againwithdraw  db  "Are you continue to withdraw? (Y = yes) : $"
+    againwithdraw  db  "Are you continue to withdraw? (Y/N) : $"
+	noMoneyMsg DB "No enough money to withdraw.Please enter a valid amount.$"
 	
-	withinvalidmsg	  db "Invalid withdraw amount.Please enter again.$"
-
-
+	
 	INPUTAMT	LABEL	BYTE
 	MAX_IN	    DB	6
 	ACT_IN	    DB	?
@@ -150,6 +147,9 @@
 	MAX_DEC	DB	3
 	ACT_DEC	DB	?
 	DT_DEC	DB	3 DUP ('0')
+	
+	dginvalidmsg	  db "Invalid input amount.Please enter digit only.$"
+	disbalance    db  "Your current bank balance : $"
 	
 ;=====================================================================================================================
 .code
@@ -427,99 +427,14 @@ DISUSER3:
 		jmp mmenu    
 		
 JMPER1: JMP JMPER1N1
-			
+
 mmenu:
 	;display account balance
 	mov ah,09h
 	lea dx,CURRENTAMT
 	int 21h
 	
-	mov ax,0
-	mov ax,tempBalance
-	
-	cmp ax,10000
-	JAE dis5
-	cmp ax,1000
-	JAE dis4
-	cmp ax,100
-	JAE dis3
-	cmp ax,10
-	JAE dis2
-	jmp dis1
-
-JMPER2: jmp JMPER1
-	
-dis5:
-	mov dx,0 
-	mov bx,10000D
-	div bx
-	mov quotient,dx
-	mov ah,02h
-	mov dl,al
-	add dl,30h
-	int 21h
-	mov ax,quotient
-	
-dis4:
-	mov dx,0
-	mov bx,1000D
-	div bx  
-	mov quotient,dx
-	mov ah,02h
-	mov dl,al
-	add dl,30h
-	int 21h
-	mov ax,quotient
-	
-dis3:
-	mov dx,0
-	mov bx,100D
-	div bx 
-	mov quotient,dx
-	mov ah,02h
-	mov dl,al 
-	add dl,30h
-	int 21h
-	mov ax,quotient
-	
-dis2:
-	mov dx,0
-	mov bx,10D 
-	div bx     
-	mov quotient,dx
-	mov ah,02h
-	mov dl,al
-	add dl,30h
-	int 21h	
-	mov ax,quotient
-	jmp dis1
-
-JMPER0: jmp JMPER2
-
-dis1:	
-	mov ah,02h
-	mov dl,al  
-	add dl,30h
-	int 21h
-	
-	mov ah,02h  ;display .
-	mov dl,2EH
-	int 21h
-	
-	;display demical
-	mov ax,0000H
-	mov al,tempAccCent
-	mov bl,10D
-	div bl
-	mov bl,ah
-	mov ah,02h
-	mov dl,al
-	add dl,30h
-	int 21h
-	
-	mov dl,bl
-	add dl,30h
-	int 21h
+	call disBal
 	
 	mov ah,09h
 	lea dx,n_line
@@ -537,6 +452,7 @@ dis1:
 		MOV BL,0
 		SUB AL,30H
 		MOV BL,AL
+		MOV isAction,BL
 		
 		CMP BL,1
 		JE WITHDRAW
@@ -547,7 +463,7 @@ dis1:
 		CMP BL,4
 		JE DEPOSIT
 		CMP BL,0
-		JE JMPER0
+		JE JMPER1
 		
 WITHDRAW: 
 			mov ah,09h
@@ -638,20 +554,8 @@ Dep proc
 	lea dx,DECIMAL
 	int 21h
 
-;error
-	cmp ax,0
-	jb depinvalid
-	cmp ax,65535
-	ja depinvalid
-	jmp DEPCALCULATE
-	
-depinvalid:	mov ah,09h
-			lea dx,n_line
-			int 21h
-	
-			lea dx,depinvalidmsg
-			int 21h
-			jmp STARTDEP
+call validDigit
+
 	
 DEPCALCULATE:
 		mov si,0
@@ -714,110 +618,26 @@ DEPINPUT:
 	sub al,100D
 	mov tempAccCent,al
 	inc tempamount
-		
+	jmp addition
+	
+depJumper1: jmp STARTDEP	
 Addition:
 	mov ax,0
 	;mov ax,tempamount
 	mov ax,tempBalance
 	add ax,tempamount
-	mov tempbalance,ax
+	mov tempBalance,ax
 	
 	;display balance
-	
 	mov ah,09h
 	lea dx,n_line
 	int 21h
 	
-	lea dx,disdeposit
+	lea dx,disbalance
 	int 21h
+	call disBal
 	
-	mov ax,0
-	mov ax,tempBalance
-	
-	cmp ax,10000
-	JAE DEPdis5
-	cmp ax,1000
-	JAE DEPdis4
-	cmp ax,100
-	JAE DEPdis3
-	cmp ax,10
-	JAE DEPdis2
-	jmp DEPdis1
-	
-depJumper1: jmp STARTDEP	
-	
-DEPdis5:
-	mov dx,0 
-	mov bx,10000D
-	div bx
-	mov quotient,dx
-	mov ah,02h
-	mov dl,al
-	add dl,30h
-	int 21h
-	mov ax,quotient
-	
-DEPdis4:
-	mov dx,0
-	mov bx,1000D
-	div bx  
-	mov quotient,dx
-	mov ah,02h
-	mov dl,al
-	add dl,30h
-	int 21h
-	mov ax,quotient
-	
-DEPdis3:
-	mov dx,0
-	mov bx,100D
-	div bx 
-	mov quotient,dx
-	mov ah,02h
-	mov dl,al 
-	add dl,30h
-	int 21h
-	mov ax,quotient
-	
-DEPdis2:
-	mov dx,0
-	mov bx,10D 
-	div bx     
-	mov quotient,dx
-	mov ah,02h
-	mov dl,al
-	add dl,30h
-	int 21h	
-	mov ax,quotient
-	jmp DEPdis1
-	
-depjumper: jmp depJumper1
-	
-DEPdis1:	
-	mov ah,02h
-	mov dl,al  
-	add dl,30h
-	int 21h
-	
-	mov ah,02h  ;display .
-	mov dl,2EH
-	int 21h
-	
-	;display demical
-	mov ax,0000H
-	mov al,tempAccCent
-	mov bl,10D
-	div bl
-	mov bl,ah
-	mov ah,02h
-	mov dl,al
-	add dl,30h
-	int 21h
-	
-	mov dl,bl
-	add dl,30h
-	int 21h
-	
+askdeposit:
 	mov dx,0000h
 	;ask to repeat deposit
 	mov ah,09h
@@ -836,9 +656,9 @@ DEPdis1:
 	int 21h
 	
 	cmp al,'Y'
-	JE depjumper
+	JE depjumper1
 	cmp al,'y'
-	JE depjumper
+	JE depjumper1
 	jmp mmenu
 Dep endp
 
@@ -867,20 +687,9 @@ STARTWITH:
 	lea dx,DECIMAL
 	int 21h
 
-;problem
-	cmp ax,0
-	jb withinvalid
-	cmp ax,65535
-	ja withinvalid
-	jmp WITHCALCULATE
+	call validDigit
 	
-withinvalid:	mov ah,09h
-			lea dx,n_line
-			int 21h
-	
-			lea dx,withinvalidmsg
-			int 21h
-			jmp STARTWITH
+
 	
 WITHCALCULATE:
 		mov si,0
@@ -903,7 +712,7 @@ WITHINPUT:
 	mov bh,00H
 	sub bx,0030h
 	mul bx
-	SUB tempamount,ax
+	add tempamount,ax
 	mov bx,rate
 	mov ax,0000H
 	mov al,10D
@@ -912,7 +721,21 @@ WITHINPUT:
 	mov rate,ax
 	dec si
 	loop WITHINPUT
+	;check enough money
+	mov ax,tempBalance
+	mov bx,tempamount
+	cmp ax,bx
+	jae calcDecimal
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+
+	lea dx,noMoneyMsg
+	int 21h
+	jmp STARTWITH
 	
+	
+	calcDecimal:
 	mov si,0
 	mov ax,0
 	mov tempAmtCent,0
@@ -921,8 +744,8 @@ WITHINPUT:
 	lea si,DT_DEC
 	
 	cmp bl,2
-	JNE WITHdigitCent1
-	mov bl,[si]
+	JNE WITHdigitCent1 
+	mov bl,[si]        ;calculation for two digit DECIMAL
 	mov bh,00H
 	sub bl,30h
 	mov al,10D
@@ -930,7 +753,7 @@ WITHINPUT:
 	mov tempAmtCent,al
 	inc si
 	
-	WITHdigitCent1:
+	WITHdigitCent1:    ;calculation for one digit decimal
 	mov al,[si]
 	sub al,30h
 	add tempAmtCent,al
@@ -944,22 +767,52 @@ WITHINPUT:
 	decSub:
 	sub tempAccCent,al
 	mov al,tempAccCent
-		
+	jmp SUBSTACTION
+	
+withjumper: jmp STARTWITH	
+
 SUBSTACTION:
 	mov ax,0
 	mov ax,tempamount
 	mov ax,tempBalance
-	add ax,tempamount
-	mov tempbalance,ax
+	sub ax,tempamount
+	mov tempBalance,ax
+	
 	
 	;display balance
-	
 	mov ah,09h
 	lea dx,n_line
 	int 21h
 	
-	lea dx,diswithdraw
+	lea dx,disbalance
 	int 21h
+	call disBal
+
+askwithdraw:
+	;ask to repeat deposit
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	
+	lea dx,n_line
+	int 21h
+
+	lea dx,againwithdraw ;display 
+	int 21h
+	
+	mov ah,01h
+	int 21h
+	
+	cmp al,'Y'
+	JE withjumper
+	cmp al,'y'
+	JE withjumper
+	jmp mmenu               
+	                
+	With endp
+	
+disBal proc
+;display BALANCE
 	
 	mov ax,0
 	mov ax,tempBalance
@@ -974,57 +827,53 @@ SUBSTACTION:
 	JAE WITHdis2
 	jmp WITHdis1
 	
-withJumper1: jmp STARTWITH	
-	
-WITHdis5:
+WITHdis5: 
 	mov dx,0 
 	mov bx,10000D
 	div bx
-	mov quotient,dx
+	mov remainder,dx
 	mov ah,02h
 	mov dl,al
 	add dl,30h
 	int 21h
-	mov ax,quotient
+	mov ax,remainder
 	
 WITHdis4:
 	mov dx,0
 	mov bx,1000D
 	div bx  
-	mov quotient,dx
+	mov remainder,dx
 	mov ah,02h
 	mov dl,al
 	add dl,30h
 	int 21h
-	mov ax,quotient
+	mov ax,remainder
 	
 WITHdis3:
 	mov dx,0
 	mov bx,100D
 	div bx 
-	mov quotient,dx
+	mov remainder,dx
 	mov ah,02h
 	mov dl,al 
 	add dl,30h
 	int 21h
-	mov ax,quotient
+	mov ax,remainder
 	
 WITHdis2:
 	mov dx,0
 	mov bx,10D 
 	div bx     
-	mov quotient,dx
+	mov remainder,dx
 	mov ah,02h
 	mov dl,al
 	add dl,30h
 	int 21h	
-	mov ax,quotient
+	mov ax,remainder
 	jmp WITHdis1
 	
-withjumper: jmp withJumper1
-	
 WITHdis1:	
-	mov ah,02h
+	mov ah,02h   
 	mov dl,al  
 	add dl,30h
 	int 21h
@@ -1048,27 +897,52 @@ WITHdis1:
 	add dl,30h
 	int 21h
 	
-	;ask to repeat deposit
-	mov ah,09h
-	lea dx,n_line
-	int 21h
+ret
+ disBal endp
+ 
+ validDigit proc
+ 
+ ;validation to make sure user input all digit
+	mov cx,0000h
+	mov cl,ACT_IN
+	mov si,0
+Dgvalid:
+    mov ax,0000h	
+	mov al,DT_IN[si]
+	cmp al,30H
+	jb withinvalid
+	cmp al,39H
+	ja withinvalid
+	inc si
+	loop Dgvalid
+	MOV BL,isAction ; VALIDATE ACTION
+			
+			cmp BL,1
+			JNE JMPTRANS
+			jmp WITHCALCULATE
+JMPTRANS:	CMP BL,2
+			JNE JMPDEP
+			JMP WITHCALCULATE
+JMPDEP:		JMP DEPCALCULATE
 	
-	mov ah,09h
-	lea dx,n_line
-	int 21h
-
-	mov ah,09h
-	lea dx,againwithdraw ;display 
-	int 21h
 	
-	mov ah,01h
-	int 21h
+	withinvalid:	
+			mov ah,09h
+			lea dx,n_line
+			int 21h
 	
-	cmp al,'Y'
-	JE withjumper
-	cmp al,'y'
-	JE withjumper
-	jmp mmenu               
-	                
-	With endp
+			lea dx,dginvalidmsg
+			int 21h
+			MOV BL,isAction
+			
+			cmp BL,1
+			JNE CMPTRANS
+			jmp STARTWITH
+CMPTRANS:	CMP BL,2
+			JNE CMPDEP
+			JMP STARTWITH
+CMPDEP:		JMP STARTDEP
+			
+ret	
+	validDigit endp
 	end main
