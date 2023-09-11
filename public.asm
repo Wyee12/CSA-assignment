@@ -44,10 +44,8 @@
      SMRY 	DB 13,10,"                         ~ WELCOME TO SUMARY REPORT ~        "
 			DB 13,10,"                   +======================================+"
 			DB 13,10,"                   |               SUMMARRY               |"
-			DB 13,10,"                   +======================================+"
-			DB 13,10,"                   |1.Withdraw                            |"
-			DB 13,10,"                   +======================================+"
-			DB 13,10,13,10,"                        Enter 0 to Exit: $"
+			DB 13,10,"                   +======================================+$"
+	SEXIT		DB 13,10,13,10,"                        Enter 0 to Exit: $"
 	
 	;Invalid msg
 	;-------------------------------------------------------------------------------------------------------------------------------------------
@@ -105,7 +103,23 @@
 	DBAL DB "CURRENT BALANCE: $"
 	IDN DB 13,10,"                            ENTER ID: $"
 	PASSW DB "                      ENTER PASSWORD: $"
-	disbalance    db  "Your current bank balance : $"
+	disbalance    db  "Your current bank balance : $" 
+	DEPT		DB "                    TIMES OF DEPOSIT  IS $"
+	WITHT		DB "                    TIMES OF WITHDRAW IS $"
+	TRANT		DB "                    TIMES OF TRANFERS IS $"
+	lastbalance    db  "                     Current bank balance : $"
+	CASHIN		DB "                    CASH IN:$"
+	CASHOUT		DB 13,10,"                    CASH OUT:$"
+	TMDEPOSIT	DB 0
+	TMWITH		DB 0
+	TMTRANFER	DB 0
+	
+	TTLDEPOSIT  DW 0
+	TTLTRANFER	DW 0
+	TTLWITH		DW 0
+	
+	TTLDEPOCENT DB 0
+	TTLWITHCENT DB 0
 
 
 		;Local Arrays
@@ -451,7 +465,11 @@ mmenu:
 	lea dx,CURRENTAMT
 	int 21h
 	
+	mov ax,0
+	mov ax,tempBalance
 	call disBal
+	mov al,tempAccCent
+	CALL DDECIMAL
 	
 	mov ah,09h
 	lea dx,n_line
@@ -480,7 +498,7 @@ mmenu:
 		CMP BL,4
 		JE SUMMARY
 		CMP BL,0
-		JE JMPER1
+		JE mmenu
 		
 WITHDRAW: 
 			mov ah,09h
@@ -488,12 +506,6 @@ WITHDRAW:
 			int 21h
 			
 			call with
-			
-			;MOV AH,09H
-			;LEA DX,SUCCESS
-			;INT 21H
-			;MOV AH,4CH
-			;INT 21H
 			
 TRANFER: 
 			mov ah,09h
@@ -517,26 +529,99 @@ SUMMARY:
 			
 			MOV AH,09H
 			LEA DX,SMRY
-			INT 21H
-			
-	
-			MOV SI,0
-			MOV CX,4
-			
-DISPLAYDEPO:
-
+			INT 21H 
+				
+			mov ah,09h
+			lea dx,n_line
+			int 21h  
 			
 			MOV AH,09H
-			LEA DX,ACCBAL1[SI]
+			LEA DX,WITHT
+			INT 21H 
+			
+			ADD TMWITH,30H	;WITHDRAW
+			MOV AH,02H
+			MOV DL,TMWITH
 			INT 21H
-			INC si
-			
-			JMP mmenu
-			
-			
+			SUB TMWITH,30H
+	
+			mov ah,09h
+			lea dx,n_line
+			int 21h
 
-		
-		
+			MOV AH,09H
+			LEA DX,TRANT
+			INT 21H			
+			
+			ADD TMTRANFER,30H	;TRANFER
+			MOV AH,02H
+			MOV DL,TMTRANFER
+			INT 21H
+			SUB TMTRANFER,30H
+
+			mov ah,09h
+			lea dx,n_line
+			int 21h
+
+			MOV AH,09H
+			LEA DX,DEPT
+			INT 21H
+			
+			ADD TMDEPOSIT,30H	;DEPOSIT
+			MOV AH,02H
+			MOV DL,TMDEPOSIT
+			INT 21H
+			SUB TMDEPOSIT,30H
+			
+			mov ah,09h
+			lea dx,n_line
+			int 21h
+			
+			MOV AH,09H
+			LEA DX,CASHIN
+			INT 21H
+			
+			mov ax,0
+			mov ax,TTLDEPOSIT
+			call disBal
+			MOV AL,0
+			MOV AL,TTLDEPOCENT
+			CALL DDECIMAL
+			
+			MOV AH,09H
+			LEA DX,CASHOUT
+			INT 21H
+			
+			mov ax,0
+			mov ax,TTLWITH
+			call disBal
+			MOV AL,0
+			MOV AL,TTLWITHCENT
+			CALL DDECIMAL
+
+			mov ah,09h
+			lea dx,n_line
+			int 21h
+			lea dx,n_line
+			int 21h
+
+			lea dx,lastbalance
+            int 21h
+			MOV AX,0
+			MOV AX,tempBalance
+            call disBal
+			MOV AL,tempAccCent
+			CALL DDECIMAL
+            			
+			MOV AH,09H
+			LEA DX,SEXIT
+			INT 21H
+			
+			MOV AH,01H
+			INT 21H
+			
+			CMP AL,'0'
+			JMP JMPER1					
 
 ;----------------------------END PROC-----------------------------------------
 	mov ah,4ch
@@ -544,7 +629,12 @@ DISPLAYDEPO:
 main endp
 
 Dep proc
-        			STARTDEP:
+STARTDEP:
+    MOV AL,0
+	MOV AL,TMDEPOSIT
+	ADD AL,1
+	MOV TMDEPOSIT,AL
+
 	MOV AH,09H
 	lea dx,n_line
 	int 21h
@@ -568,7 +658,6 @@ Dep proc
 	int 21h
 
 call validDigit
-
 	
 DEPCALCULATE:
 		mov si,0
@@ -581,10 +670,8 @@ DEPCALCULATE:
 		lea si,ACT_IN
 		add si,ax
 		jmp DEPINPUT
-		
-		
+				
 DEPINPUT:	
-
 	mov bx,rate
 	mov ax,bx
 	mov bx,[si]
@@ -633,8 +720,29 @@ DEPINPUT:
 	inc tempamount
 	jmp addition
 	
-depJumper1: jmp STARTDEP	
+	
 Addition:
+	MOV BX,0
+	MOV BX,tempamount
+	MOV DX,TTLDEPOSIT
+	ADD DX,BX
+	MOV TTLDEPOSIT,DX
+	
+	MOV BL,0
+	MOV BL,tempAmtCent
+	MOV DL,TTLDEPOCENT
+	ADD DL,BL
+	CMP DL,100
+	JAE ADDAMT
+	jmp POO
+ADDAMT:	
+	SUB DL,100D
+	MOV TTLDEPOCENT,DL
+	INC TTLDEPOSIT
+
+depJumper1: jmp STARTDEP
+POO: 
+	MOV TTLDEPOCENT,DL
 	mov ax,0
 	;mov ax,tempamount
 	mov ax,tempBalance
@@ -648,7 +756,12 @@ Addition:
 	
 	lea dx,disbalance
 	int 21h
+	
+	mov ax,0
+	mov ax,tempBalance
 	call disBal
+	mov al,tempAccCent
+	CALL DDECIMAL
 	
 askdeposit:
 	mov dx,0000h
@@ -678,6 +791,11 @@ Dep endp
 ;---------------------------------------------------------------------------------------------------------------------------
 With proc
 STARTWITH:
+    MOV AL,0
+	MOV AL,TMWITH
+	ADD AL,1
+	MOV TMWITH,AL
+    
 	MOV AH,09H
 	lea dx,n_line
 	int 21h
@@ -711,7 +829,12 @@ STARTWITH:
 	
 	lea dx,disbalance
 	int 21h
+	
+	mov ax,0
+	mov ax,tempBalance
 	call disBal
+	mov al,tempAccCent
+	CALL DDECIMAL
 
 askwithdraw:
 	;ask to repeat deposit
@@ -738,9 +861,6 @@ askwithdraw:
 	
 disBal proc
 ;display BALANCE
-	
-	mov ax,0
-	mov ax,tempBalance
 	
 	cmp ax,10000
 	JAE WITHdis5
@@ -806,10 +926,15 @@ WITHdis1:
 	mov ah,02h  ;display .
 	mov dl,2EH
 	int 21h
+
+ret
+ disBal endp
+ 
+ DDECIMAL PROC
 	
 	;display demical
-	mov ax,0000H
-	mov al,tempAccCent
+	mov ah,00H
+
 	mov bl,10D
 	div bl
 	mov bl,ah
@@ -823,7 +948,8 @@ WITHdis1:
 	int 21h
 	
 ret
- disBal endp
+ DDECIMAL endp
+ 
  
  subs proc
  
@@ -857,6 +983,28 @@ WITHINPUT:
 	mov rate,ax
 	dec si
 	loop WITHINPUT
+	
+	MOV BX,0
+	MOV BX,tempamount
+	MOV DX,TTLWITH
+	ADD DX,BX
+	MOV TTLWITH,DX
+	
+	MOV BL,0
+	MOV BL,tempAmtCent
+	MOV DL,TTLWITHCENT
+	ADD DL,BL
+	CMP DL,100
+	JAE ADDAMTT
+	jmp PEE
+ADDAMTT:	
+	SUB DL,100D
+	MOV TTLWITHCENT,DL
+	INC TTLWITH
+
+PEE:
+	MOV TTLWITHCENT,DL
+	
 	;check enough money
 	mov ax,tempBalance
 	mov bx,tempamount
@@ -969,7 +1117,12 @@ ret
 	validDigit endp
 	
 trans proc
-STARTTRANS:
+STARTTRANS: 
+    MOV AL,0
+    MOV AL,TMTRANFER
+	ADD AL,1
+	MOV TMTRANFER,AL
+
 	mov ah,09h
 	lea dx,n_line
 	int 21h
@@ -1059,6 +1212,8 @@ STARTTRANS2:
 	lea dx,DECIMAL
 	int 21h
 	
+	
+	
 	call validDigit
 	
 	call subs
@@ -1072,7 +1227,12 @@ STARTTRANS2:
 	
 	lea dx,disbalance
 	int 21h
+	
+	mov ax,0
+	mov ax,tempBalance
 	call disBal
+	mov al,tempAccCent
+	CALL DDECIMAL
 	
 asktransfer:
 	;ask to repeat deposit
