@@ -130,15 +130,6 @@
 	
 	depinvalidmsg	  db "Invalid deposit amount.Please enter again.$"
 
-	DEPAMOUNT 	LABEL	 BYTE
-	MAX_DEP		DB 		6	
-	ACT_DEP		DB 		?
-	DT_DEP		DB 	    6 DUP('0')
-	
-	DEPDEM		LABEL	BYTE
-	MAX_DEPD	DB 		3
-	ACT_DEPD	db		?
-	DT_DEPD		db		3 DUP('0')
 	
 	;WITHDRAW	
 ;-------------------------------------------------------------------------------------------------------------------------------------------
@@ -149,15 +140,16 @@
 	
 	withinvalidmsg	  db "Invalid withdraw amount.Please enter again.$"
 
-	WITHAMOUNT 	LABEL	 BYTE
-	MAX_WITH		DB 		6	
-	ACT_WITH		DB 		?
-	DT_WITH		DB 	    6 DUP('0')
+
+	INPUTAMT	LABEL	BYTE
+	MAX_IN	    DB	6
+	ACT_IN	    DB	?
+	DT_IN	    DB	6 DUP('0')
 	
-	WITHDEM		LABEL	BYTE
-	MAX_WITHD	DB 		3
-	ACT_WITHD	db		?
-	DT_WITHD		db		3 DUP('0')
+	DECIMAL	LABEL	BYTE
+	MAX_DEC	DB	3
+	ACT_DEC	DB	?
+	DT_DEC	DB	3 DUP ('0')
 	
 ;=====================================================================================================================
 .code
@@ -553,7 +545,7 @@ dis1:
 		CMP BL,3
 		JE DEPOSIT
 		CMP BL,4
-		JE SUMMARY
+		JE DEPOSIT
 		CMP BL,0
 		JE JMPER0
 		
@@ -586,7 +578,7 @@ DEPOSIT:
 			lea dx,n_line
 			int 21h
 			
-			call Dep
+            call dep
 			
 		
 SUMMARY: 
@@ -623,7 +615,7 @@ DISPLAYDEPO:
 main endp
 
 Dep proc
-STARTDEP:
+        			STARTDEP:
 	MOV AH,09H
 	lea dx,n_line
 	int 21h
@@ -632,7 +624,7 @@ STARTDEP:
 	int 21h
 	
 	mov ah,0AH
-	lea dx,DEPAMOUNT
+	lea dx,INPUTAMT
 	int 21h
 	
 	mov ah,09h
@@ -643,7 +635,7 @@ STARTDEP:
 	int 21h
 	
 	mov ah,0AH
-	lea dx,DEPDEM
+	lea dx,DECIMAL
 	int 21h
 
 ;error
@@ -665,11 +657,11 @@ DEPCALCULATE:
 		mov si,0
         mov tempamount,0	
 		mov rate,1
-		mov al,ACT_DEP
+		mov al,ACT_IN
 		mov ah,00H
 		mov cl,al
 		mov ch,00H
-		lea si,ACT_DEP
+		lea si,ACT_IN
 		add si,ax
 		jmp DEPINPUT
 		
@@ -695,9 +687,9 @@ DEPINPUT:
 	mov si,0
 	mov ax,0
 	mov tempAmtCent,0
-	mov bl,ACT_DEPD
+	mov bl,ACT_DEC
 	mov bh,00h
-	lea si,DT_DEPD
+	lea si,DT_DEC
 	
 	cmp bl,2
 	JNE DEPdigitCent1
@@ -722,11 +714,10 @@ DEPINPUT:
 	sub al,100D
 	mov tempAccCent,al
 	inc tempamount
-	jmp addition
 		
 Addition:
 	mov ax,0
-	mov ax,tempamount
+	;mov ax,tempamount
 	mov ax,tempBalance
 	add ax,tempamount
 	mov tempbalance,ax
@@ -798,7 +789,7 @@ DEPdis2:
 	add dl,30h
 	int 21h	
 	mov ax,quotient
-	jmp dis1
+	jmp DEPdis1
 	
 depjumper: jmp depJumper1
 	
@@ -827,6 +818,7 @@ DEPdis1:
 	add dl,30h
 	int 21h
 	
+	mov dx,0000h
 	;ask to repeat deposit
 	mov ah,09h
 	lea dx,n_line
@@ -837,7 +829,7 @@ DEPdis1:
 	int 21h
 
 	mov ah,09h
-	lea dx,againdeposit
+	lea dx,againdeposit ;display continue or not?
 	int 21h
 	
 	mov ah,01h
@@ -847,7 +839,7 @@ DEPdis1:
 	JE depjumper
 	cmp al,'y'
 	JE depjumper
-	
+	jmp mmenu
 Dep endp
 
 ;---------------------------------------------------------------------------------------------------------------------------
@@ -861,7 +853,7 @@ STARTWITH:
 	int 21h
 	
 	mov ah,0AH
-	lea dx,WITHAMOUNT
+	lea dx,INPUTAMT
 	int 21h
 	
 	mov ah,09h
@@ -872,7 +864,7 @@ STARTWITH:
 	int 21h
 	
 	mov ah,0AH
-	lea dx,WITHDEM
+	lea dx,DECIMAL
 	int 21h
 
 ;problem
@@ -892,13 +884,13 @@ withinvalid:	mov ah,09h
 	
 WITHCALCULATE:
 		mov si,0
-        mov withamount,0	
+        mov tempamount,0	
 		mov rate,1
-		mov al,ACT_WITH
+		mov al,ACT_IN
 		mov ah,00H
 		mov cl,al
 		mov ch,00H
-		lea si,ACT_WITH
+		lea si,ACT_IN
 		add si,ax
 		jmp WITHINPUT
 		
@@ -924,9 +916,9 @@ WITHINPUT:
 	mov si,0
 	mov ax,0
 	mov tempAmtCent,0
-	mov bl,ACT_WITHD
+	mov bl,ACT_DEC
 	mov bh,00h
-	lea si,DT_WITHD
+	lea si,DT_DEC
 	
 	cmp bl,2
 	JNE WITHdigitCent1
@@ -1027,7 +1019,7 @@ WITHdis2:
 	add dl,30h
 	int 21h	
 	mov ax,quotient
-	jmp dis1
+	jmp WITHdis1
 	
 withjumper: jmp withJumper1
 	
@@ -1066,7 +1058,7 @@ WITHdis1:
 	int 21h
 
 	mov ah,09h
-	lea dx,againwithdraw
+	lea dx,againwithdraw ;display 
 	int 21h
 	
 	mov ah,01h
@@ -1076,6 +1068,7 @@ WITHdis1:
 	JE withjumper
 	cmp al,'y'
 	JE withjumper
-	
+	jmp mmenu               
+	                
 	With endp
 	end main
