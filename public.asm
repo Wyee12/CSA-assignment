@@ -14,7 +14,7 @@
 
 	;LOGMENU
 	;-------------------------------------------------------------------------------------------------------------------------------------------
-	LOGMENU 	DB 13,10,"                         WELCOME TO PUBLIC BANK        "
+	LOGMENU DB 13,10,"                           WELCOME TO PUBLIC BANK        "
 			DB 13,10,"                   +======================================+"
 			DB 13,10,"                   |               LOG MENU               |"
 			DB 13,10,"                   +======================================+"
@@ -92,8 +92,47 @@
 	isUser  DB ?
 	TEMPBAL DW ?
 	DEPOSITSUM DB 4 DUP(?)
-
 	
+	HDLG   DB 13,10,"                                WELCOME TO PBE              "		  
+            DB 13,10,"                   ========================================>"
+			DB 13,10,"                   |                                       >"
+			DB 13,10,"                   |                LOGIN IN               >"
+			DB 13,10,"                   |                                       >" 
+			DB 13,10,"                   ========================================>$"	
+	
+	HDDEP   DB 13,10,"                                WELCOME TO PBE              "
+            DB 13,10,"                   ========================================>"
+			DB 13,10,"                   |                                       >"
+			DB 13,10,"                   |                DEPOSIT                >"
+			DB 13,10,"                   |                                       >" 
+			DB 13,10,"                   ========================================>$"
+	
+	HDWITH  DB 13,10,"                                WELCOME TO PBE              "
+            DB 13,10,"                   ========================================>"
+			DB 13,10,"                   |                                       >"
+			DB 13,10,"                   |                WITHDRAW               >"
+			DB 13,10,"                   |                                       >" 
+			DB 13,10,"                   ========================================>$"
+
+	HDTRANS DB 13,10,"                                WELCOME TO PBE              "
+            DB 13,10,"                   ========================================>"
+			DB 13,10,"                   |                                       >"
+			DB 13,10,"                   |                TRANSFER               >"
+			DB 13,10,"                   |                                       >" 
+			DB 13,10,"                   ========================================>$"	
+
+	HDINT   DB 13,10,"                                WELCOME TO PBE              "
+            DB 13,10,"                   ========================================>"
+			DB 13,10,"                   |                                       >"
+			DB 13,10,"                   |           CALCULATE INTEREST          >"
+			DB 13,10,"                   |                                       >" 
+			DB 13,10,"                   ========================================>$"
+			
+	ANYKEY	DB 13,10,"                          PRESS ANY KEY TO CONTINUE$"
+	QUITMSG DB       "                              |                   |"
+			DB 13,10,"                              |  PRESS 0 TO QUIT  |"
+			DB 13,10,"                              |___________________|$"
+
 	
 ;DISPLAY	
 ;-------------------------------------------------------------------------------------------------------------------------------------------
@@ -104,14 +143,14 @@
 	DBAL DB "CURRENT BALANCE: $"
 	IDN DB 13,10,"                            ENTER ID: $"
 	PASSW DB "                      ENTER PASSWORD: $"
-	disbalance    db  "Your current bank balance : $" 
+	disbalance    db  "Your current bank balance                : $" 
 	DEPT		DB "                    TIMES OF DEPOSIT  IS $"
 	WITHT		DB "                    TIMES OF WITHDRAW IS $"
 	TRANT		DB "                    TIMES OF TRANFERS IS $"
 	lastbalance    db  "                     Current bank balance : $"
 	CASHIN		DB "                    CASH IN:$"
 	CASHOUT		DB 13,10,"                    CASH OUT:$"
-	INTDIS		DB " YEARS OF 2.5% INTEREST IS $"
+	INTDIS		DB " YEARS OF 5% INTEREST IS $"
 	TMDEPOSIT	DB 0
 	TMWITH		DB 0
 	TMTRANFER	DB 0
@@ -138,8 +177,8 @@
 
 	;DEPOSIT	
 ;-------------------------------------------------------------------------------------------------------------------------------------------
-	depositmsg    db "Enter the deposit amount                : $"
-	depositmsg2	  db "Enter the cent of deposit amount(00-99) : $"
+	depositmsg    db "Enter the deposit amount                 : $"
+	depositmsg2	  db "Enter the cent of deposit amount(00-99)  : $"
     againdeposit  db  "Are you continue to deposit? (Y/N) : $"
 	tempBalance   dw 0
 	tempamount 	  dw 0
@@ -159,7 +198,7 @@
 	
 	;TRANSFER	
 ;-------------------------------------------------------------------------------------------------------------------------------------------
-	transaccmsg	DB	"Enter the transfer account :$"
+	transaccmsg	DB	"Enter the transfer account               : $"
 	transfermsg    db "Enter the transfer amount                : $"
 	transfermsg2	  db "Enter the cent of transfer amount(00-99) : $"
     againtransfer  db  "Are you continue to transfer? (Y/N) : $"
@@ -184,9 +223,9 @@
 	
 		;CALCULATE INTEREST	
 ;-------------------------------------------------------------------------------------------------------------------------------------------
-	interestMsg db "Enter the amount of saving             :$"
-	interestMsg2 db "Enter the cent amount of saving(00-99) :$"
-	interestMsg3 db "Enter the total years of saving :$"
+	interestMsg db "Enter the amount of saving                :$"
+	interestMsg2 db "Enter the cent amount of saving(00-99)    :$"
+	interestMsg3 db "Enter the total years of saving           :$"
 	interestYear db	?
 	resultInterest db "Your interest will be RM $"
 	
@@ -203,7 +242,7 @@ main proc
 	mov ds,ax
 	
 
-menu:
+menu:		CALL CLR1
 			mov ah,09h		
 			lea dx,LOGO
 			int 21h
@@ -224,7 +263,7 @@ compare:
 			CMP BL,0
 			JE EXIT
 
-EXIT: 		
+EXIT: 		CALL CLR1	
 			mov ah,09h
 			lea dx,n_line
 			int 21h
@@ -246,12 +285,20 @@ invalidmsg:
 			jmp input
 
 ;----------------------------LOG IN-----------------------
-Login:			
+Login:		CALL CLR2	
 			mov ah,09h
 			lea dx,n_line
 			int 21h
 			
-			mov ah,09h		
+			lea dx,HDLG
+			int 21h
+			
+			lea dx,n_line
+			int 21h
+			
+			lea dx,n_line
+			int 21h
+					
 			lea dx,IDN
 			int 21h
 
@@ -353,7 +400,7 @@ JMPER:
 		JMP PAGAIN
 		
 JMPER1N1: JMP JMPER1N2	
-COMPAREPS:	      
+COMPAREPS:	CALL CLR3      
         MOV SI, 0
 		MOV CX, 4
 		MOV BL,0
@@ -502,6 +549,74 @@ mmmenu:
 	MOV TMDEPOSIT,0
 	mov TMTRANFER,0
 	MOV TMWITH,0
+		JMP mmenu	
+		
+WHOISTHIS:CALL CLR3	
+		MOV bl,isUser	
+		cmp bl,1	
+		je D1	
+		CMP bL,2	
+		Je D2	
+		CMP bL,3	
+		Je D3 	
+			
+D1:	
+		mov ah,09h	
+		lea dx,n_line	
+		int 21h	
+			
+		lea dx,DACCNO	
+		int 21h 	
+		lea dx,ACCNO1	
+		int 21h 	
+			
+		lea dx,n_line	
+		int 21h	
+			
+		lea dx,DACCNAME	
+		int 21h 	
+		lea dx,ACCNAME1	
+		int 21h	
+			
+		JMP mmenu	
+D2:	
+		mov ah,09h	
+		lea dx,n_line	
+		int 21h	
+			
+		lea dx,DACCNO	
+		int 21h 	
+		lea dx,ACCNO2	
+		int 21h 	
+			
+		lea dx,n_line	
+		int 21h	
+			
+		lea dx,DACCNAME	
+		int 21h 	
+		lea dx,ACCNAME2	
+		int 21h	
+			
+		jmp mmenu	
+D3:	
+		mov ah,09h	
+		lea dx,n_line	
+		int 21h	
+			
+		lea dx,DACCNO	
+		int 21h 	
+		lea dx,ACCNO3	
+		int 21h 	
+			
+		lea dx,n_line	
+		int 21h	
+			
+		lea dx,DACCNAME	
+		int 21h 	
+		lea dx,ACCNAME3	
+		int 21h	
+			
+		jmp mmenu
 mmenu:	
 	mov ah,09h
 	lea dx,CURRENTAMT         ;;display account balance
@@ -549,29 +664,50 @@ contJumper4: jmp JMPER1
 		
 contJumper3: jmp INTERESTCALC		
 
-WITHDRAW: 
-			mov ah,09h
+WITHDRAW:   call clr2
+			CALL EXITMSG
+			MOV AH,09H
+			LEA DX,n_line
+			INT 21H
+			
+			LEA DX,HDWITH
+			INT 21H
+			
 			lea dx,n_line
 			int 21h
 			
 			call with
 			
-TRANFER: 
+TRANFER:    call clr2
+			CALL EXITMSG
+			MOV AH,09H
+			LEA DX,n_line
+			INT 21H
+			
+			LEA DX,HDTRANS
+			INT 21H
+			
 			mov ah,09h
 			lea dx,n_line
 			int 21h
-			
 			call trans
 			
-DEPOSIT: 
+DEPOSIT:    call clr2
+			CALL EXITMSG
+			MOV AH,09H
+			LEA DX,n_line
+			INT 21H
+			
+			LEA DX,HDDEP
+			INT 21H
+			
 			mov ah,09h
 			lea dx,n_line
 			int 21h
-			
             call dep
 			
 		
-SUMMARY: 
+SUMMARY:    call clr2 
 			mov ah,09h
 			lea dx,n_line
 			int 21h
@@ -670,10 +806,22 @@ SUMMARY:
 			INT 21H
 			
 			CMP AL,'0'
-			JMP mmenu					
+			JMP WHOISTHIS					
 
-INTERESTCALC: 
-		CALL CALCINT
+INTERESTCALC:
+			call clr2
+			CALL EXITMSG
+			MOV AH,09H
+			LEA DX,n_line
+			INT 21H
+			
+			LEA DX,HDINT
+			INT 21H
+			
+			LEA DX,n_line
+			INT 21H
+
+			CALL CALCINT
 ;----------------------------END PROC-----------------------------------------
 	mov ah,4ch
 	int 21h
@@ -802,7 +950,7 @@ askdeposit:
 	JE depjumper1
 	cmp al,'y'
 	JE depjumper1
-	jmp mmenu
+	jmp WHOISTHIS
 Dep endp
 
 ;---------------------------------------------------------------------------------------------------------------------------
@@ -872,7 +1020,7 @@ askwithdraw:
 	JE STARTWITH
 	cmp al,'y'
 	JE STARTWITH
-	jmp mmenu               
+	jmp WHOISTHIS               
 	                
 	With endp
 	
@@ -1090,7 +1238,19 @@ SUBSTACTION:
  subs endp
  
  validDigit proc
- 
+	mov si,0
+	mov al,DT_IN[si]
+	cmp al,30H
+	je exitMenu
+	jmp validDG
+	
+exitMenu:
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	jmp WHOISTHIS
+	
+validDG:
  ;validation to make sure user input all digit
 	mov cx,0000h
 	mov cl,ACT_IN
@@ -1153,6 +1313,19 @@ STARTTRANS:
 	lea dx,TRANSIN
 	int 21h
 	
+	mov si,0
+	mov al,DT_TIN[si]
+	cmp al,30H
+	je exitMenu2
+	jmp cmpuser1
+	
+exitMenu2:
+	mov ah,09h
+	lea dx,n_line
+	int 21h
+	jmp WHOISTHIS
+
+cmpuser1:
 	;search ACCNO
 	mov bl,isUser
 	cmp bl,1
@@ -1309,7 +1482,7 @@ asktransfer:
 	JE contStart1
 	cmp al,'y'
 	JE contStart1
-	jmp mmenu
+	jmp WHOISTHIS
 contStart1: jmp STARTTRANS
 	
 trans endp
@@ -1339,6 +1512,8 @@ CALCINT proc
 		mov ah,0AH
 		lea dx,INPUTAMT
 		int 21h
+		
+		call validDigit
 		
 		mov ah,09h
 		lea dx,n_line
@@ -1455,7 +1630,17 @@ disInterest:
 		add dl,30h
 		int 21h
 		
-		jmp mmenu
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		lea dx,ANYKEY
+		int 21h
+		
+		mov ah,01h
+		int 21h
+		
+		jmp WHOISTHIS
 CALCINT endp
 DigitINPUT proc
 DEPINPUT:	
@@ -1498,4 +1683,56 @@ DEPINPUT:
 	add tempAmtCent,al
 ret
 DigitINPUT endp
+
+		
+CLR1 PROC	
+SCLR1: 	
+    MOV AH,00	
+    MOV AL,02	
+    INT 10H	
+    MOV ax, 0600h	
+    MOV BH, 1FH	
+    MOV cx, 0000h	
+    MOV dx, 184fh	
+    INT 10H	
+ RET	
+CLR1 ENDP	
+CLR2 PROC	
+SCLR2: 	
+    MOV AH,00	
+    MOV AL,02	
+    INT 10H	
+    MOV ax, 0600h	
+    MOV BH, 2FH	
+    MOV cx, 0000h	
+    MOV dx, 184fh	
+    INT 10H	
+ RET	
+CLR2 ENDP	
+CLR3 PROC	
+SCLR3: 	
+    MOV AH,00	
+    MOV AL,02	
+    INT 10H	
+    MOV ax, 0600h	
+    MOV BH, 6FH	
+    MOV cx, 0000h	
+    MOV dx, 184fh	
+    INT 10H	
+ RET	
+CLR3 ENDP
+
+EXITMSG proc
+	
+	mov ah,09h
+	mov bl,04h
+	mov cx,15
+	int 10h
+
+	
+	MOV AH,09H
+	LEA DX,QUITMSG
+	INT 21H
+	ret
+	EXITMSG endp
 	end main
