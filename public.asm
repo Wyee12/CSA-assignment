@@ -32,9 +32,9 @@
 			DB 13,10,"                   |1.Withdraw                            |"
 			DB 13,10,"                   |2.Tranfer                             |"
 			DB 13,10,"                   |3.Deposit                             |"
-			DB 13,10,"                   |4.Summary                             |"
-			DB 13,10,"                   |5.Calc Interest                       |"
-			DB 13,10,"                   |0.Exit                                |"
+			DB 13,10,"                   |4.Calc Interest                       |"
+			DB 13,10,"                   |5.Summary                             |"
+			DB 13,10,"                   |0.Exit(Log Menu)                      |"
 			DB 13,10,"                   +======================================+"
 			DB 13,10,13,10,"                            Enter selection: $"   
 
@@ -46,7 +46,7 @@
 			DB 13,10,"                   +======================================+"
 			DB 13,10,"                   |               SUMMARRY               |"
 			DB 13,10,"                   +======================================+$"
-	SEXIT		DB 13,10,13,10,"                        Enter 0 to Exit: $"
+	SEXIT		DB 13,10,13,10,"                   Enter 0 to Main Menu: $"
 	
 	;Invalid msg
 	;-------------------------------------------------------------------------------------------------------------------------------------------
@@ -111,6 +111,7 @@
 	lastbalance    db  "                     Current bank balance : $"
 	CASHIN		DB "                    CASH IN:$"
 	CASHOUT		DB 13,10,"                    CASH OUT:$"
+	INTDIS		DB " YEARS OF 2.5% INTEREST IS $"
 	TMDEPOSIT	DB 0
 	TMWITH		DB 0
 	TMTRANFER	DB 0
@@ -529,9 +530,10 @@ mmenu:
 		CMP BL,3
 		JE DEPOSIT
 		CMP BL,4
-		JE SUMMARY
-		CMP BL,5
 		JE contJumper3
+		CMP BL,5
+		JE SUMMARY
+		
 		CMP BL,0
 		JE contJumper4
 		
@@ -725,13 +727,13 @@ DEPCALCULATE:
 	
 	
 Addition:
-	MOV BX,0
+	MOV BX,0			;STORE TOTAL AMT DEPOSIT
 	MOV BX,tempamount
 	MOV DX,TTLDEPOSIT
 	ADD DX,BX
 	MOV TTLDEPOSIT,DX
 	
-	MOV BL,0
+	MOV BL,0			;STORE TOTAL AMTCENT DEPOSIT
 	MOV BL,tempAmtCent
 	MOV DL,TTLDEPOCENT
 	ADD DL,BL
@@ -747,6 +749,7 @@ ADDAMT:
 depJumper1: jmp STARTDEP
 POO: 
 	MOV TTLDEPOCENT,DL
+	
 	mov ax,0
 	;mov ax,tempamount
 	mov ax,tempBalance
@@ -988,26 +991,13 @@ WITHINPUT:
 	dec si
 	loop WITHINPUT
 	
-	MOV BX,0
+	MOV BX,0			;STORE TOTAL AMT
 	MOV BX,tempamount
 	MOV DX,TTLWITH
 	ADD DX,BX
 	MOV TTLWITH,DX
 	
-	MOV BL,0
-	MOV BL,tempAmtCent
-	MOV DL,TTLWITHCENT
-	ADD DL,BL
-	CMP DL,100
-	JAE ADDAMTT
-	jmp PEE
-ADDAMTT:	
-	SUB DL,100D
-	MOV TTLWITHCENT,DL
-	INC TTLWITH
 
-PEE:
-	MOV TTLWITHCENT,DL
 	
 	;check enough money
 	mov ax,tempBalance
@@ -1046,6 +1036,21 @@ contJumper2: jmp STARTTRANS2
 	mul bl
 	mov tempAmtCent,al
 	inc si
+	
+	MOV CL,0			;STORE TOTAL AMTCENT
+	MOV CL,tempAmtCent
+	MOV DL,TTLWITHCENT
+	ADD DL,CL
+	CMP DL,100
+	JAE ADDAMTT
+	jmp PEE
+ADDAMTT:	
+	SUB DL,100D
+	MOV TTLWITHCENT,DL
+	INC TTLWITH
+
+PEE:
+	MOV TTLWITHCENT,DL
 	
 	WITHdigitCent1:    ;calculation for one digit decimal
 	mov al,[si]
@@ -1419,6 +1424,13 @@ disInterest:
         mov ah,09h
 	    lea dx,n_line
 	    int 21h
+		
+		MOV AH,02H
+		MOV DL,interestYear
+		INT 21H 
+		MOV AH,09H
+		LEA DX,INTDIS
+		INT 21H
 	
 		mov ax,quo
 		call disBal
