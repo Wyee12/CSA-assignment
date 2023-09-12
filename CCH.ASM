@@ -32,8 +32,9 @@
 			DB 13,10,"                   |1.Withdraw                            |"
 			DB 13,10,"                   |2.Tranfer                             |"
 			DB 13,10,"                   |3.Deposit                             |"
-			DB 13,10,"                   |4.Summary                             |"
-			DB 13,10,"                   |0.Exit                                |"
+			DB 13,10,"                   |4.Calc Interest                       |"
+			DB 13,10,"                   |5.Summary                             |"
+			DB 13,10,"                   |0.Exit(Log Menu)                      |"
 			DB 13,10,"                   +======================================+"
 			DB 13,10,13,10,"                            Enter selection: $"   
 
@@ -45,7 +46,7 @@
 			DB 13,10,"                   +======================================+"
 			DB 13,10,"                   |               SUMMARRY               |"
 			DB 13,10,"                   +======================================+$"
-	SEXIT		DB 13,10,13,10,"                        Enter 0 to Exit: $"
+	SEXIT		DB 13,10,13,10,"                   Enter 0 to Main Menu: $"
 	
 	;Invalid msg
 	;-------------------------------------------------------------------------------------------------------------------------------------------
@@ -110,6 +111,7 @@
 	lastbalance    db  "                     Current bank balance : $"
 	CASHIN		DB "                    CASH IN:$"
 	CASHOUT		DB 13,10,"                    CASH OUT:$"
+	INTDIS		DB " YEARS OF 2.5% INTEREST IS $"
 	TMDEPOSIT	DB 0
 	TMWITH		DB 0
 	TMTRANFER	DB 0
@@ -180,6 +182,18 @@
 	ACT_DEC	DB	?
 	DT_DEC	DB	3 DUP ('0')
 	
+		;CALCULATE INTEREST	
+;-------------------------------------------------------------------------------------------------------------------------------------------
+	interestMsg db "Enter the amount of saving             :$"
+	interestMsg2 db "Enter the cent amount of saving(00-99) :$"
+	interestMsg3 db "Enter the total years of saving :$"
+	interestYear db	?
+	resultInterest db "Your interest will be RM $"
+	
+	quo dw ?
+	rem dw ?
+	dec1 db ?
+	dec2 db ?
 
 	
 ;=====================================================================================================================
@@ -189,7 +203,7 @@ main proc
 	mov ds,ax
 	
 
-menu:
+menu:	CALL CLR1
 			mov ah,09h		
 			lea dx,LOGO
 			int 21h
@@ -210,7 +224,7 @@ compare:
 			CMP BL,0
 			JE EXIT
 
-EXIT: 		
+EXIT: 		CALL CLR1
 			mov ah,09h
 			lea dx,n_line
 			int 21h
@@ -232,7 +246,7 @@ invalidmsg:
 			jmp input
 
 ;----------------------------LOG IN-----------------------
-Login:			
+Login:		CALL CLR2	
 			mov ah,09h
 			lea dx,n_line
 			int 21h
@@ -339,7 +353,7 @@ JMPER:
 		JMP PAGAIN
 		
 JMPER1N1: JMP JMPER1N2	
-COMPAREPS:	      
+COMPAREPS:	CALL CLR3      
         MOV SI, 0
 		MOV CX, 4
 		MOV BL,0
@@ -404,7 +418,7 @@ DISUSER1:
 		mov BL,ACCCent1
 		mov tempAccCent,BL
 		
-		JMP mmenu
+		JMP mmmenu
 DISUSER2:
 		mov ah,09h
 		lea dx,n_line
@@ -429,7 +443,7 @@ DISUSER2:
 		mov BL,ACCCent2
 		mov tempAccCent,BL
 		
-		jmp mmenu
+		jmp mmmenu
 
 DISUSER3:
 		mov ah,09h
@@ -455,14 +469,111 @@ DISUSER3:
 		mov BL,ACCCent3
 		mov tempAccCent,BL
 		
-		jmp mmenu    
+		jmp mmmenu    
 		
-JMPER1: JMP JMPER1N1
+JMPER1: mov bx,tempBalance
+		mov dl,tempAmtCent
+		mov ah,isUser
+		cmp ah,1
+		JNE cmpu2
+		mov ACCBAL1,bx
+		mov ACCCent1,dl
+		jmp jmpMenu
+		
+cmpu2:	
+		cmp ah,2
+		JNE cmpu3
+		mov ACCBAL2,bx
+		mov ACCCent2,dl
+		jmp jmpMenu
+		
+cmpu3:	
+		mov ACCBAL3,bx
+		mov ACCCent2,dl
+		
+jmpMenu:	JMP JMPER1N1
+			
+mmmenu:
+	
+	mov TTLWITHCENT,0		;CLR 
+	mov TTLWITH,0
+	mov TTLDEPOSIT,0
+	mov TTLDEPOCENT,0
+	MOV TMDEPOSIT,0
+	mov TMTRANFER,0
+	MOV TMWITH,0
+	JMP mmenu
+	
+WHOISTHIS:CALL CLR3
+		MOV bl,isUser
+		cmp bl,1
+		je D1
+		CMP bL,2
+		Je D2
+		CMP bL,3
+		Je D3 
+		
+D1:
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNO
+		int 21h 
+		lea dx,ACCNO1
+		int 21h 
+		
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNAME
+		int 21h 
+		lea dx,ACCNAME1
+		int 21h
+		
+		JMP mmenu
+D2:
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNO
+		int 21h 
+		lea dx,ACCNO2
+		int 21h 
+		
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNAME
+		int 21h 
+		lea dx,ACCNAME2
+		int 21h
+		
+		jmp mmenu
 
-mmenu:
-	;display account balance
+D3:
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNO
+		int 21h 
+		lea dx,ACCNO3
+		int 21h 
+		
+		lea dx,n_line
+		int 21h
+		
+		lea dx,DACCNAME
+		int 21h 
+		lea dx,ACCNAME3
+		int 21h
+		
+		jmp mmenu
+mmenu:	
 	mov ah,09h
-	lea dx,CURRENTAMT
+	lea dx,CURRENTAMT         ;;display account balance
 	int 21h
 	
 	mov ax,0
@@ -496,33 +607,40 @@ mmenu:
 		CMP BL,3
 		JE DEPOSIT
 		CMP BL,4
+		JE contJumper3
+		CMP BL,5
 		JE SUMMARY
-		CMP BL,0
-		JE JMPER1
 		
+		CMP BL,0
+		JE contJumper4
+		
+contJumper4: jmp JMPER1
+		
+contJumper3: jmp INTERESTCALC		
+
 WITHDRAW: 
 			mov ah,09h
 			lea dx,n_line
 			int 21h
-			
+			CALL CLR2
 			call with
 			
 TRANFER: 
 			mov ah,09h
 			lea dx,n_line
 			int 21h
-			
+			CALL CLR2
 			call trans
 			
 DEPOSIT: 
 			mov ah,09h
 			lea dx,n_line
 			int 21h
-			
+			CALL CLR2
             call dep
 			
 		
-SUMMARY: 
+SUMMARY: 	CALL CLR2
 			mov ah,09h
 			lea dx,n_line
 			int 21h
@@ -621,8 +739,10 @@ SUMMARY:
 			INT 21H
 			
 			CMP AL,'0'
-			JMP mmenu					
+			JMP WHOISTHIS					
 
+INTERESTCALC: 
+		CALL CALCINT
 ;----------------------------END PROC-----------------------------------------
 	mov ah,4ch
 	int 21h
@@ -669,46 +789,14 @@ DEPCALCULATE:
 		mov ch,00H
 		lea si,ACT_IN
 		add si,ax
-		jmp DEPINPUT
-				
-DEPINPUT:	
-	mov bx,rate
-	mov ax,bx
-	mov bx,[si]
-	mov bh,00H
-	sub bx,0030h
-	mul bx
-	add tempamount,ax
-	mov bx,rate
-	mov ax,0000H
-	mov al,10D
-	mov dx,0000H
-	mul bx
-	mov rate,ax
-	dec si
-	loop DEPINPUT
 	
-	mov si,0
-	mov ax,0
-	mov tempAmtCent,0
-	mov bl,ACT_DEC
-	mov bh,00h
-	lea si,DT_DEC
-	
-	cmp bl,2
-	JNE DEPdigitCent1
-	mov bl,[si]
-	mov bh,00H
-	sub bl,30h
-	mov al,10D
-	mul bl
-	mov tempAmtCent,al
-	inc si
-	
-	DEPdigitCent1:
-	mov al,[si]
-	sub al,30h
-	add tempAmtCent,al
+		call DigitINPUT 
+		
+	MOV BX,0			;STORE TOTAL AMT DEPOSIT
+	MOV BX,tempamount
+	MOV DX,TTLDEPOSIT
+	ADD DX,BX
+	MOV TTLDEPOSIT,DX	
 	
 	mov al,tempAmtCent
 	add tempAccCent,al
@@ -722,13 +810,9 @@ DEPINPUT:
 	
 	
 Addition:
-	MOV BX,0
-	MOV BX,tempamount
-	MOV DX,TTLDEPOSIT
-	ADD DX,BX
-	MOV TTLDEPOSIT,DX
+
 	
-	MOV BL,0
+	MOV BL,0			;STORE TOTAL AMTCENT DEPOSIT
 	MOV BL,tempAmtCent
 	MOV DL,TTLDEPOCENT
 	ADD DL,BL
@@ -739,11 +823,12 @@ ADDAMT:
 	SUB DL,100D
 	MOV TTLDEPOCENT,DL
 	INC TTLDEPOSIT
-	jmp poo
+	jmp POO
 
 depJumper1: jmp STARTDEP
 POO: 
 	MOV TTLDEPOCENT,DL
+	
 	mov ax,0
 	;mov ax,tempamount
 	mov ax,tempBalance
@@ -786,7 +871,7 @@ askdeposit:
 	JE depjumper1
 	cmp al,'y'
 	JE depjumper1
-	jmp mmenu
+	jmp WHOISTHIS
 Dep endp
 
 ;---------------------------------------------------------------------------------------------------------------------------
@@ -856,7 +941,7 @@ askwithdraw:
 	JE STARTWITH
 	cmp al,'y'
 	JE STARTWITH
-	jmp mmenu               
+	jmp WHOISTHIS               
 	                
 	With endp
 	
@@ -985,26 +1070,13 @@ WITHINPUT:
 	dec si
 	loop WITHINPUT
 	
-	MOV BX,0
+	MOV BX,0			;STORE TOTAL AMT
 	MOV BX,tempamount
 	MOV DX,TTLWITH
 	ADD DX,BX
 	MOV TTLWITH,DX
 	
-	MOV BL,0
-	MOV BL,tempAmtCent
-	MOV DL,TTLWITHCENT
-	ADD DL,BL
-	CMP DL,100
-	JAE ADDAMTT
-	jmp PEE
-ADDAMTT:	
-	SUB DL,100D
-	MOV TTLWITHCENT,DL
-	INC TTLWITH
 
-PEE:
-	MOV TTLWITHCENT,DL
 	
 	;check enough money
 	mov ax,tempBalance
@@ -1043,6 +1115,21 @@ contJumper2: jmp STARTTRANS2
 	mul bl
 	mov tempAmtCent,al
 	inc si
+	
+	MOV CL,0			;STORE TOTAL AMTCENT
+	MOV CL,tempAmtCent
+	MOV DL,TTLWITHCENT
+	ADD DL,CL
+	CMP DL,100
+	JAE ADDAMTT
+	jmp PEE
+ADDAMTT:	
+	SUB DL,100D
+	MOV TTLWITHCENT,DL
+	INC TTLWITH
+
+PEE:
+	MOV TTLWITHCENT,DL
 	
 	WITHdigitCent1:    ;calculation for one digit decimal
 	mov al,[si]
@@ -1216,7 +1303,7 @@ STARTTRANS2:
 	lea dx,DECIMAL
 	int 21h
 	
-		call validDigit
+	call validDigit
 	call subs
 	
 	
@@ -1257,7 +1344,7 @@ transUser3:
 	mov bx,tempamount
 	add ACCBAL3,bx	
 	
-displayamt:
+displayamt:	
 	;display balance
 	mov ah,09h
 	lea dx,n_line
@@ -1291,18 +1378,236 @@ asktransfer:
 	JE contStart1
 	cmp al,'y'
 	JE contStart1
-	jmp mmenu
+	jmp WHOISTHIS
 contStart1: jmp STARTTRANS
 	
 trans endp
 
 checkover100 proc
+	mov ah,00h
 	cmp dl,100D
 	jb notOver
-	mov ah,00h
 	mov al,1
 	sub dl,100D
-	
+ret	
 notOver: mov al,00h 
 ret	
+checkover100 endp
+
+CALCINT proc
+        mov ax,@data
+        mov ds,ax
+
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		lea dx,interestMsg
+		int 21h
+		
+		mov ah,0AH
+		lea dx,INPUTAMT
+		int 21h
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		lea dx,interestMsg2
+		int 21h
+		
+		mov ah,0AH
+		lea dx,DECIMAL
+		int 21h
+		
+		mov ah,09h
+		lea dx,n_line
+		int 21h
+		
+		lea dx,interestMsg3
+		int 21h
+		
+		mov ah,01h
+		int 21h   
+		mov interestYear,al
+		
+		mov si,0
+        mov tempamount,0	
+		mov rate,1
+		mov al,ACT_IN
+		mov ah,00H
+		mov cl,al
+		mov ch,00H
+		lea si,ACT_IN
+		add si,ax
+		
+		call DigitINPUT
+		mov ax,tempamount
+		mov bx,100D
+		mov dx,0
+		div bx
+		mov rem,dx
+		mov bl,05
+		mul bl
+		mov quo,ax 
+		mov bl,interestYear
+		sub bl,30h
+		mul bx
+		mov quo,ax
+		mov ax,rem
+		mov bl,interestYear
+		sub bl,30h
+		mul bl
+		mov rem,ax
+		mov bh,00
+		mov bl,05
+		mul bx
+		mov rem,ax
+		cmp ax,100D
+		JL interestDec
+		mov dx,0
+		mov bx,100D
+		div bx
+		add quo,ax
+		mov rem,dx
+		
+interestDec:
+		mov bl,05
+		mov ah,00H
+		mov al,tempAmtCent
+		mul bl
+		;ax = 280
+		mov dx,0
+		mov bx,0 
+		mov bl,interestYear
+		sub bl,30h
+		mul bx
+		cmp ax,100D
+		JL disInterest
+		mov dx,0000
+		mov bx,100D
+		div bx
+		add rem,ax
+		mov ax,rem
+		cmp al,100D
+		JL movDec
+		sub al,100D
+		mov bx,0001
+		add quo,bx
+		
+movDec:
+		mov dec1,al
+		mov dec2,dl
+		
+disInterest:     
+        mov ah,09h
+	    lea dx,n_line
+	    int 21h
+		
+		MOV AH,02H
+		MOV DL,interestYear
+		INT 21H 
+		MOV AH,09H
+		LEA DX,INTDIS
+		INT 21H
+	
+		mov ax,quo
+		call disBal
+		mov al,dec1
+		call DDECIMAL
+		mov ax,0
+		mov al,dec2
+		mov bl,10D
+		div bl
+		mov ah,02h
+		mov dl,al
+		add dl,30h
+		int 21h
+		
+		jmp WHOISTHIS
+CALCINT endp
+DigitINPUT proc
+DEPINPUT:	
+	mov bx,rate
+	mov ax,bx
+	mov bx,[si]
+	mov bh,00H
+	sub bx,0030h
+	mul bx
+	add tempamount,ax
+	mov bx,rate
+	mov ax,0000H
+	mov al,10D
+	mov dx,0000H
+	mul bx
+	mov rate,ax
+	dec si
+	loop DEPINPUT
+	
+	mov si,0
+	mov ax,0
+	mov tempAmtCent,0
+	mov bl,ACT_DEC
+	mov bh,00h
+	lea si,DT_DEC
+	
+	cmp bl,2
+	JNE DEPdigitCent1
+	mov bl,[si]
+	mov bh,00H
+	sub bl,30h
+	mov al,10D
+	mul bl
+	mov tempAmtCent,al
+	inc si
+	
+	DEPdigitCent1:
+	mov al,[si]
+	sub al,30h
+	add tempAmtCent,al
+ret
+DigitINPUT endp
+
+CLR1 PROC
+SCLR1: 
+    MOV AH,00
+    MOV AL,02
+    INT 10H
+
+    MOV ax, 0600h
+    MOV BH, 3FH
+    MOV cx, 0000h
+    MOV dx, 184fh
+    INT 10H
+
+ RET
+CLR1 ENDP
+CLR2 PROC
+SCLR2: 
+    MOV AH,00
+    MOV AL,02
+    INT 10H
+
+    MOV ax, 0600h
+    MOV BH, 5FH
+    MOV cx, 0000h
+    MOV dx, 184fh
+    INT 10H
+
+ RET
+CLR2 ENDP
+CLR3 PROC
+SCLR3: 
+    MOV AH,00
+    MOV AL,02
+    INT 10H
+
+    MOV ax, 0600h
+    MOV BH, 6FH
+    MOV cx, 0000h
+    MOV dx, 184fh
+    INT 10H
+
+ RET
+CLR3 ENDP
 	end main
