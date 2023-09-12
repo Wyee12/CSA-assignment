@@ -494,16 +494,6 @@ cmpu3:
 jmpMenu:	JMP JMPER1N1
 			
 mmmenu:
-	;display account balance
-	mov ah,09h
-	lea dx,CURRENTAMT
-	int 21h
-	
-	mov ax,0
-	mov ax,tempBalance
-	call disBal
-	mov al,tempAccCent
-	CALL DDECIMAL
 	
 	mov TTLWITHCENT,0		;CLR 
 	mov TTLWITH,0
@@ -512,7 +502,18 @@ mmmenu:
 	MOV TMDEPOSIT,0
 	mov TMTRANFER,0
 	MOV TMWITH,0
-mmenu:	mov ah,09h
+mmenu:	
+	mov ah,09h
+	lea dx,CURRENTAMT         ;;display account balance
+	int 21h
+	
+	mov ax,0
+	mov ax,tempBalance
+	call disBal
+	mov al,tempAccCent
+	CALL DDECIMAL
+	
+	mov ah,09h
 	lea dx,n_line
 	int 21h
 	
@@ -1312,12 +1313,12 @@ contStart1: jmp STARTTRANS
 trans endp
 
 checkover100 proc
+	mov ah,00h
 	cmp dl,100D
 	jb notOver
-	mov ah,00h
 	mov al,1
 	sub dl,100D
-	
+ret	
 notOver: mov al,00h 
 ret	
 checkover100 endp
