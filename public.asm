@@ -418,7 +418,7 @@ DISUSER1:
 		mov BL,ACCCent1
 		mov tempAccCent,BL
 		
-		JMP mmenu
+		JMP mmmenu
 DISUSER2:
 		mov ah,09h
 		lea dx,n_line
@@ -443,7 +443,7 @@ DISUSER2:
 		mov BL,ACCCent2
 		mov tempAccCent,BL
 		
-		jmp mmenu
+		jmp mmmenu
 
 DISUSER3:
 		mov ah,09h
@@ -469,7 +469,7 @@ DISUSER3:
 		mov BL,ACCCent3
 		mov tempAccCent,BL
 		
-		jmp mmenu    
+		jmp mmmenu    
 		
 JMPER1: mov bx,tempBalance
 		mov dl,tempAmtCent
@@ -492,8 +492,8 @@ cmpu3:
 		mov ACCCent2,dl
 		
 jmpMenu:	JMP JMPER1N1
-
-mmenu:
+			
+mmmenu:
 	;display account balance
 	mov ah,09h
 	lea dx,CURRENTAMT
@@ -505,7 +505,14 @@ mmenu:
 	mov al,tempAccCent
 	CALL DDECIMAL
 	
-	mov ah,09h
+	mov TTLWITHCENT,0		;CLR 
+	mov TTLWITH,0
+	mov TTLDEPOSIT,0
+	mov TTLDEPOCENT,0
+	MOV TMDEPOSIT,0
+	mov TMTRANFER,0
+	MOV TMWITH,0
+mmenu:	mov ah,09h
 	lea dx,n_line
 	int 21h
 	
