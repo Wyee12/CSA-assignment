@@ -721,7 +721,13 @@ DEPCALCULATE:
 		lea si,ACT_IN
 		add si,ax
 	
-		call DigitINPUT
+		call DigitINPUT 
+		
+	MOV BX,0			;STORE TOTAL AMT DEPOSIT
+	MOV BX,tempamount
+	MOV DX,TTLDEPOSIT
+	ADD DX,BX
+	MOV TTLDEPOSIT,DX	
 	
 	mov al,tempAmtCent
 	add tempAccCent,al
@@ -735,11 +741,7 @@ DEPCALCULATE:
 	
 	
 Addition:
-	MOV BX,0			;STORE TOTAL AMT DEPOSIT
-	MOV BX,tempamount
-	MOV DX,TTLDEPOSIT
-	ADD DX,BX
-	MOV TTLDEPOSIT,DX
+
 	
 	MOV BL,0			;STORE TOTAL AMTCENT DEPOSIT
 	MOV BL,tempAmtCent
