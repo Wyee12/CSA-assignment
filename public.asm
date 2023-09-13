@@ -764,12 +764,7 @@ INTERESTCALC:	call clr2				;START OF CALC INTEREST
 main endp
 
 Dep proc								;DEPOSIT PROGRAM
-STARTDEP:	MOV AL,0
-			MOV AL,TMDEPOSIT
-			ADD AL,1
-			MOV TMDEPOSIT,AL
-
-			MOV AH,09H
+STARTDEP:	MOV AH,09H
 			lea dx,n_line
 			int 21h
 			
@@ -792,6 +787,10 @@ STARTDEP:	MOV AL,0
 			int 21h
 
 			call validDigit			;VALIDATION TO MAKE SURE USER ENTER 1-9
+			MOV AL,0
+			MOV AL,TMDEPOSIT
+			ADD AL,1
+			MOV TMDEPOSIT,AL
 	
 DEPCALCULATE:	mov si,0			
 				mov tempamount,0	
@@ -879,12 +878,7 @@ askdeposit:	mov dx,0000h			;ask to repeat deposit
 Dep endp
 ;---------------------------------------------------------------------------------------------------------------------------
 With proc						;WITHDRAW PROGRAM
-STARTWITH:	MOV AL,0
-			MOV AL,TMWITH
-			ADD AL,1
-			MOV TMWITH,AL
-			
-			MOV AH,09H
+STARTWITH:	MOV AH,09H
 			lea dx,n_line
 			int 21h
 			
@@ -907,6 +901,10 @@ STARTWITH:	MOV AL,0
 			int 21h
 
 			call validDigit				;VERIFY USER ENTER 0-9 ONLY
+			MOV AL,0
+			MOV AL,TMWITH
+			ADD AL,1
+			MOV TMWITH,AL
 			call subs					;SUBSTRATION CASH PROGRAM
 
 			mov ah,09h					
