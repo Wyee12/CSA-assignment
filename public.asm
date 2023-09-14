@@ -92,6 +92,7 @@
 	CLOSE     DB "                                 THANKS YOU! $"
 	dginvalidmsg	  DB "Invalid input amount.Please enter digit only.$"
 	inTransMsg DB	13,10,"The account number does not exist.Please enter a valid account number.",13,10,"$"
+	invldmsg  DB	13,10,"        The action does not exist.Please enter a valid action number.",13,10,"$"	
 	
 	;user information
 	;-------------------------------------------------------------------------------------------------------------------------------------------
@@ -572,10 +573,9 @@ mmenu:	mov ah,09h
 		mov ah,09h
 		lea dx,n_line
 		int 21h
-		
 		lea dx,n_line
 		int 21h
-		
+
 		lea dx,MAINMENU
 		int 21h
 		
@@ -595,12 +595,24 @@ mmenu:	mov ah,09h
 		CMP BL,4
 		JE contJumper3
 		CMP BL,5
-		JE SUMMARY
+		JE contJumper5
 		CMP BL,0
 		JE contJumper4
+		jmp invalidAct
 		
-contJumper4: jmp JMPER1
-contJumper3: jmp INTERESTCALC		
+invalidAct:		mov ah,09h
+				lea dx,invldmsg
+				int 21h
+				
+				lea dx,ANYKEY
+				int 21h
+				mov ah,01h
+				int 21h
+				jmp WHOISTHIS
+				
+contJumper5:	jmp SUMMARY				
+contJumper4: 	jmp JMPER1
+contJumper3: 	jmp INTERESTCALC		
 
 WITHDRAW:   call clr2				;START OF WITHDRAW FEATURE
 			CALL EXITMSG
