@@ -1172,6 +1172,7 @@ exitMenu:	mov ah,09h
 validDG:	mov cx,0000h		;validation to make sure user input all digit
 			mov cl,ACT_IN
 			mov si,0
+			mov di,0
 			
 Dgvalid:	mov ax,0000h	
 			mov al,DT_IN[si]
@@ -1181,6 +1182,16 @@ Dgvalid:	mov ax,0000h
 			ja withinvalid
 			inc si
 			loop Dgvalid
+			mov cl,ACT_DEC
+DecValid:	mov ax,0000h
+			mov al,DT_DEC[si]
+			cmp al,30H
+			jb withinvalid
+			cmp al,39H
+			ja withinvalid
+			inc si
+			loop DecValid
+			
 			MOV BL,isAction ; VALIDATE ACTION
 			cmp BL,1
 			JNE JMPTRANS
