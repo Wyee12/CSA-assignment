@@ -916,12 +916,12 @@ STARTWITH:	MOV AH,09H
 			int 21h
 
 			call validDigit				;VERIFY USER ENTER 0-9 ONLY
+			call subs					;SUBSTRATION CASH PROGRAM
 			MOV AL,0
 			MOV AL,TMWITH
 			ADD AL,1
 			MOV TMWITH,AL
-			call subs					;SUBSTRATION CASH PROGRAM
-
+			
 			mov ah,09h					
 			lea dx,n_line
 			int 21h
@@ -1063,28 +1063,8 @@ WITHINPUT:		mov bx,rate					;ADD DIGITS TO TEMP AMOUNT
 				mov rate,ax
 				dec si
 				loop WITHINPUT
-	
-				MOV BX,0			;STORE TOTAL AMT
-				MOV BX,tempamount
-				MOV DX,TTLWITH
-				ADD DX,BX
-				MOV TTLWITH,DX
-	
-	
-				mov ax,tempBalance				;check enough money
-				mov bx,tempamount
-				cmp ax,bx
-				jae calcDecimal
-				mov ah,09h
-				lea dx,n_line
-				int 21h
+				jmp calcDecimal
 
-				lea dx,noMoneyMsg
-				int 21h
-				mov al,isAction
-				cmp al,1
-				je contJumper1
-				jne contJumper2
 	
 contJumper1: jmp STARTWITH
 contJumper2: jmp STARTTRANS2
@@ -1106,7 +1086,47 @@ calcDecimal:	mov si,0
 				mul bl
 				mov tempAmtCent,al
 				inc si
-	
+				
+WITHdigitCent1:	mov al,[si]    ;calculation for one digit decimal
+				sub al,30h
+				add tempAmtCent,al
+				mov al,tempAmtCent
+				
+				mov al,tempAmtCent
+				cmp tempAccCent,al
+				JAE decSub
+				mov bl,100D
+				add tempAccCent,BL
+				dec tempBalance
+				decSub:
+				sub tempAccCent,al
+				mov al,tempAccCent
+				
+				CMP tempAccCent,al
+				JB NOMONEY
+				
+				mov ax,tempBalance				;check enough money
+				mov bx,tempamount
+				cmp ax,bx
+				jae storeTotalAmt
+NOMONEY:		mov ah,09h
+				lea dx,n_line
+				int 21h
+
+        		lea dx,noMoneyMsg
+				int 21h
+				mov al,isAction
+				cmp al,1
+				je contJumper1
+				jne contJumper2
+				
+storeTotalAmt:			
+				MOV BX,0			;STORE TOTAL AMT
+				MOV BX,tempamount
+				MOV DX,TTLWITH
+				ADD DX,BX
+				MOV TTLWITH,DX
+				
 				MOV CL,0			;STORE TOTAL AMTCENT
 				MOV CL,tempAmtCent
 				MOV DL,TTLWITHCENT
@@ -1120,21 +1140,8 @@ ADDAMTT:		SUB DL,100D
 				INC TTLWITH
 
 PEE:			MOV TTLWITHCENT,DL
+				jmp SUBSTACTION	
 
-WITHdigitCent1:	mov al,[si]    ;calculation for one digit decimal
-				sub al,30h
-				add tempAmtCent,al
-	
-				mov al,tempAmtCent
-				cmp tempAccCent,al
-				JAE decSub
-				mov bl,100D
-				add tempAccCent,BL
-				dec tempBalance
-				decSub:
-				sub tempAccCent,al
-				mov al,tempAccCent
-				jmp SUBSTACTION
 	
 withjumper: jmp STARTWITH	
 
@@ -1297,13 +1304,11 @@ STARTTRANS2:	MOV AH,09H
 				int 21h
 				
 				call validDigit
-				
+				call subs
 				MOV AL,0				
 				MOV AL,TMTRANFER
 				ADD AL,1
 				MOV TMTRANFER,AL
-				
-				call subs
 				
 				mov ah,tempAmtCent
 				mov al,istransUser
