@@ -135,9 +135,10 @@
 	DEPT		DB "                    TIMES OF DEPOSIT  IS $"
 	WITHT		DB "                    TIMES OF WITHDRAW IS $"
 	TRANT		DB "                    TIMES OF TRANFERS IS $"
-	lastbalance DB  "                     Current bank balance : $"
+	lastbalance DB  "                    Current bank balance : $"
 	CASHIN		DB "                    CASH IN:$"
 	CASHOUT		DB 13,10,"                    CASH OUT:$"
+	SCCS		DB 13,10,"   <<========================[SUCCESSFULLY DONE]========================>>",13,10,13,10,"$"
 	INTDIS		DB " YEARS OF 5% INTEREST IS $"
 	TMDEPOSIT	DB 0
 	TMWITH		DB 0
@@ -857,6 +858,8 @@ POO: 		MOV TTLDEPOCENT,DL
 			lea dx,n_line
 			int 21h
 			
+			LEA DX,SCCS
+			INT 21H
 			lea dx,disbalance		;display balance
 			int 21h
 			
@@ -923,6 +926,8 @@ STARTWITH:	MOV AH,09H
 			lea dx,n_line
 			int 21h
 			
+			LEA DX,SCCS
+			INT 21H
 			lea dx,disbalance			;display balance
 			int 21h
 			
@@ -1338,6 +1343,8 @@ displayamt:		mov ah,09h						;display balance
 				lea dx,n_line
 				int 21h
 				
+				LEA DX,SCCS
+				INT 21H
 				lea dx,disbalance
 				int 21h
 				
