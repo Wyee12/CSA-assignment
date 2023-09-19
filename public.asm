@@ -1183,6 +1183,7 @@ Dgvalid:	mov ax,0000h
 			inc si
 			loop Dgvalid
 			mov cl,ACT_DEC
+			mov si,0
 DecValid:	mov ax,0000h
 			mov al,DT_DEC[si]
 			cmp al,30H
